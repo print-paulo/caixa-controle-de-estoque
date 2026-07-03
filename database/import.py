@@ -16,9 +16,9 @@ from pathlib import Path
 import pandas as pd
 
 PASTA_SCRIPT = Path(__file__).resolve().parent
-ARQUIVO_EXCEL = PASTA_SCRIPT / "Estoque.xlsx"
+ARQUIVO_EXCEL = PASTA_SCRIPT / "banco.xlsx"
 ABA = "Controle de Estoque"
-BANCO = PASTA_SCRIPT / "estoque.db"
+BANCO = PASTA_SCRIPT / "banco.db"
 
 
 def criar_tabelas(conn):
