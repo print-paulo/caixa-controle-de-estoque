@@ -1,0 +1,30 @@
+# Banco de dados
+*.db
+*.sqlite
+*.sqlite3
+
+# Ambiente virtual
+venv/
+env/
+.venv/
+
+# Cache do Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Arquivos do Excel (dados sensíveis/planilha real - não sobe pro repo)
+*.xlsx
+*.xls
+~$*.xlsx
+
+# Configs locais / variáveis de ambiente
+.env
+
+# VS Code / PyCharm
+.vscode/
+.idea/
+
+# Sistema
+.DS_Store
+Thumbs.db
