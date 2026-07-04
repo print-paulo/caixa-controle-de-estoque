@@ -1,10 +1,10 @@
 def codigo_lido():
-    codigo = input()
-
     while True:
-        if len(codigo) == 13:
+        codigo = input().strip()
+
+        if codigo.lower() == "sair": #Temporario pq precisa dps fazer que aperte o botão e saia
+            return None
+
+        if len(codigo) == 13 and codigo.isdigit():
             return codigo
-        elif codigo == "sair":
-            break
-        else:
-            print("Código invalido")
+        print("Código inválido.")
