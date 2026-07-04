@@ -82,14 +82,14 @@ def cadastrar_produto(
 # Teste rápido para verificar se o cadastro funciona
 if __name__ == "__main__":
     id_produto = cadastrar_produto(
-        nome_produto="Coca-Cola 2L",
-        categoria="Bebidas",
-        quantidade=2.0,
-        medida_quantidade="L",
-        unidade="UN",
-        valor_unitario=8.5,
-        estoque_deposito=10,
-        estoque_minimo=3,
+        nome_produto=input("Insira o nome do produto").strip(),
+        categoria=input("Insira o categoria").strip(),
+        quantidade= int(input("Insira o quantidade")),
+        medida_quantidade=float(input("Insira o medida quantidade")),
+        unidade=str(input("Insira o unidade")),
+        valor_unitario=float(input("Insira o valor unitario")),
+        estoque_deposito=int(input("Insira o estoque deposito")),
+        estoque_minimo=int(input("Insira o estoque minimo")),
         codigo_barras=codigo_lido()
     )
     print(f"Produto cadastrado com id {id_produto}")
