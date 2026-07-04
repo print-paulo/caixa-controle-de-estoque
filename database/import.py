@@ -15,9 +15,8 @@ from pathlib import Path
 
 import pandas as pd
 
-PASTA_PLANILHA = Path("../planilhas").resolve()
 PASTA_SCRIPT = Path(__file__).resolve().parent
-ARQUIVO_EXCEL = PASTA_PLANILHA / "banco.xlsx"
+PASTA_PLANILHAS = Path("./planilha").resolve()
 ABA = "Controle de Estoque"
 BANCO = PASTA_SCRIPT / "banco.db"
 
@@ -80,18 +79,9 @@ def linha_valida(row):
     return True
 
 
-def importar():
-    if not ARQUIVO_EXCEL.exists():
-        print(f"Arquivo não encontrado: {ARQUIVO_EXCEL}")
-        print("Coloque o 'Estoque.xlsx' na mesma pasta deste script.")
-        return
-
-    df = pd.read_excel(ARQUIVO_EXCEL, sheet_name=ABA, header=1)
-
-    conn = sqlite3.connect(BANCO)
-    conn.execute("PRAGMA foreign_keys = ON")
-    criar_tabelas(conn)
-    cursor = conn.cursor()
+def importar_arquivo(cursor, caminho_arquivo):
+    """Importa um único .xlsx e devolve (inseridos, ignorados) desse arquivo."""
+    df = pd.read_excel(caminho_arquivo, sheet_name=ABA, header=1)
 
     inseridos = 0
     ignorados = 0
@@ -101,7 +91,8 @@ def importar():
             ignorados += 1
             continue
 
-        codigo = str(row["Código"]).strip() if pd.notna(row["Código"]) else None
+        # codigo_barras fica sempre nulo aqui - será preenchido manualmente depois via UPDATE
+        codigo = None
         nome_produto = str(row["Produto"]).strip()
         quantidade, medida = separar_quantidade(row.get("Quantidade"))
         unidade = str(row["Unidade"]).strip() if pd.notna(row.get("Unidade")) else None
@@ -125,11 +116,50 @@ def importar():
 
         inseridos += 1
 
+    return inseridos, ignorados
+
+
+def importar():
+    if not PASTA_PLANILHAS.exists():
+        print(f"Pasta não encontrada: {PASTA_PLANILHAS}")
+        print("Crie uma pasta 'planilha' ao lado deste script e coloque os .xlsx dentro dela.")
+        return
+
+    # ignora arquivos temporários do Excel (ex: ~$Estoque.xlsx, criados quando o arquivo está aberto)
+    arquivos = [
+        f for f in PASTA_PLANILHAS.glob("*.xlsx")
+        if not f.name.startswith("~$")
+    ]
+
+    if not arquivos:
+        print(f"Nenhum .xlsx encontrado em: {PASTA_PLANILHAS}")
+        return
+
+    conn = sqlite3.connect(BANCO)
+    conn.execute("PRAGMA foreign_keys = ON")
+    criar_tabelas(conn)
+    cursor = conn.cursor()
+
+    total_inseridos = 0
+    total_ignorados = 0
+
+    for arquivo in arquivos:
+        try:
+            inseridos, ignorados = importar_arquivo(cursor, arquivo)
+        except Exception as e:
+            print(f"Erro ao importar '{arquivo.name}': {e}")
+            continue
+
+        total_inseridos += inseridos
+        total_ignorados += ignorados
+        print(f"  {arquivo.name}: {inseridos} inseridos, {ignorados} ignorados")
+
     conn.commit()
     conn.close()
 
-    print(f"Banco criado em: {BANCO}")
-    print(f"Importação concluída: {inseridos} produtos inseridos, {ignorados} linhas ignoradas (vazias/inválidas).")
+    print(f"\nBanco criado em: {BANCO}")
+    print(f"Importação concluída: {total_inseridos} produtos inseridos no total, "
+          f"{total_ignorados} linhas ignoradas (vazias/inválidas).")
 
 
 if __name__ == "__main__":
