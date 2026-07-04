@@ -17,7 +17,6 @@ import pandas as pd
 
 PASTA_SCRIPT = Path(__file__).resolve().parent
 PASTA_PLANILHAS = Path("./planilha").resolve()
-ABA = "Controle de Estoque"
 BANCO = PASTA_SCRIPT / "banco.db"
 
 
@@ -81,7 +80,7 @@ def linha_valida(row):
 
 def importar_arquivo(cursor, caminho_arquivo):
     """Importa um único .xlsx e devolve (inseridos, ignorados) desse arquivo."""
-    df = pd.read_excel(caminho_arquivo, sheet_name=ABA, header=1)
+    df = pd.read_excel(caminho_arquivo, sheet_name=0, header=1)
 
     inseridos = 0
     ignorados = 0
