@@ -44,8 +44,10 @@ def criar_tabelas(conn):
         CREATE TABLE IF NOT EXISTS estoque (
             id_estoque INTEGER PRIMARY KEY AUTOINCREMENT,
             id_produto INTEGER UNIQUE,
+            estoque_deposito INTEGER,
+            estoque_exposicao INTEGER,
+            capacidade_exposicao INTEGER,
             estoque_minimo INTEGER,
-            estoque_atual INTEGER,
             ultima_atualizacao TIMESTAMP,
             FOREIGN KEY (id_produto) REFERENCES produto(id_produto)
         )
@@ -96,7 +98,11 @@ def importar_arquivo(cursor, caminho_arquivo):
         quantidade, medida = separar_quantidade(row.get("Quantidade"))
         unidade = str(row["Unidade"]).strip() if pd.notna(row.get("Unidade")) else None
         minimo = int(row["Estoque Mínimo"]) if pd.notna(row.get("Estoque Mínimo")) else 0
-        atual = int(row["Estoque Atual"]) if pd.notna(row.get("Estoque Atual")) else 0
+        # A planilha só tem "Estoque Atual" (um valor só), sem distinguir depósito/exposição.
+        # Assumindo esse valor como estoque_deposito por enquanto; ajuste manualmente depois se necessário.
+        estoque_deposito = int(row["Estoque Atual"]) if pd.notna(row.get("Estoque Atual")) else 0
+        estoque_exposicao = 0
+        capacidade_exposicao = None
         valor_unitario = float(row["Valor Unitário"]) if pd.notna(row.get("Valor Unitário")) else 0.0
         ultima_atualizacao = row["Última Atualização"] if pd.notna(row.get("Última Atualização")) else None
 
@@ -109,9 +115,11 @@ def importar_arquivo(cursor, caminho_arquivo):
         id_produto = cursor.lastrowid
 
         cursor.execute("""
-            INSERT INTO estoque (id_produto, estoque_minimo, estoque_atual, ultima_atualizacao)
-            VALUES (?, ?, ?, ?)
-        """, (id_produto, minimo, atual, str(ultima_atualizacao) if ultima_atualizacao else None))
+            INSERT INTO estoque
+            (id_produto, estoque_deposito, estoque_exposicao, capacidade_exposicao, estoque_minimo, ultima_atualizacao)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (id_produto, estoque_deposito, estoque_exposicao, capacidade_exposicao, minimo,
+              str(ultima_atualizacao) if ultima_atualizacao else None))
 
         inseridos += 1
 
