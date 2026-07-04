@@ -13,6 +13,7 @@ def buscar_por_codigo_barras(codigo):
         SELECT *
         FROM produto
         WHERE codigo_barras = ?
+        AND ativo = 1
     """, (codigo,))
 
     produto = cursor.fetchone()
@@ -30,6 +31,7 @@ def buscar_por_nome(nome):
         SELECT *
         FROM produto
         WHERE nome_produto LIKE ?
+        AND ativo = 1
     """, (f"%{nome}%",))
 
     produtos = cursor.fetchall()
@@ -43,6 +45,7 @@ def buscar_por_id(id_produto):
         SELECT *
         FROM produto
         WHERE id_produto = ?
+        AND ativo = 1
     """, (id_produto,))
 
     produto = cursor.fetchone()
@@ -56,6 +59,7 @@ def listar_todos():
         SELECT *
         FROM produto
         ORDER BY nome_produto
+        AND ativo = 1
     """)
 
     produtos = cursor.fetchall()
