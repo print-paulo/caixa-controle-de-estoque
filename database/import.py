@@ -15,12 +15,12 @@ from pathlib import Path
 
 import pandas as pd
 
-PASTA_SCRIPT = Path(__file__).resolve().parent
-PASTA_PLANILHAS = Path("./planilha").resolve()
-BANCO = PASTA_SCRIPT / "banco.db"
+PASTA_SCRIPT = Path(__file__).resolve().parent # Caminho absoluto da pasta onde está este script
+PASTA_PLANILHAS = Path("./planilha").resolve() # Caminho absoluto da pasta "planilha" ao lado deste script
+BANCO = PASTA_SCRIPT / "banco.db" # Caminho absoluto do banco SQLite a ser criado na mesma pasta deste script
 
 
-def criar_tabelas(conn):
+def criar_tabelas(conn): # Cria as tabelas categoria, produto e estoque no banco SQLite, se não existirem.
     conn.execute("""
         CREATE TABLE IF NOT EXISTS categoria (
             id_categoria INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -55,7 +55,7 @@ def criar_tabelas(conn):
     conn.commit()
 
 
-def separar_quantidade(valor):
+def separar_quantidade(valor): # Separa o valor da quantidade do texto.
     """'750 ml' -> (750.0, 'ml'). Se não der pra separar, devolve (None, texto original)."""
     if valor is None or (isinstance(valor, float) and pd.isna(valor)):
         return None, None
@@ -70,7 +70,7 @@ def separar_quantidade(valor):
     return None, texto
 
 
-def linha_valida(row):
+def linha_valida(row): # Verifica se uma linha da planilha é válida.
     """Descarta linhas vazias, a linha de total e linhas com nome de produto inválido."""
     produto = row["Produto"]
     if produto is None or (isinstance(produto, float) and pd.isna(produto)):
@@ -80,7 +80,7 @@ def linha_valida(row):
     return True
 
 
-def importar_arquivo(cursor, caminho_arquivo):
+def importar_arquivo(cursor, caminho_arquivo): # Importa um único arquivo .xlsx para o banco SQLite.
     """Importa um único .xlsx e devolve (inseridos, ignorados) desse arquivo."""
     df = pd.read_excel(caminho_arquivo, sheet_name=0, header=1)
 
@@ -126,7 +126,7 @@ def importar_arquivo(cursor, caminho_arquivo):
     return inseridos, ignorados
 
 
-def importar():
+def importar(): # Função principal que importa todos os arquivos .xlsx da pasta "planilha" para o banco SQLite.
     if not PASTA_PLANILHAS.exists():
         print(f"Pasta não encontrada: {PASTA_PLANILHAS}")
         print("Crie uma pasta 'planilha' ao lado deste script e coloque os .xlsx dentro dela.")
