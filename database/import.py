@@ -15,8 +15,9 @@ from pathlib import Path
 
 import pandas as pd
 
+PASTA_PLANILHA = Path("../planilhas").resolve()
 PASTA_SCRIPT = Path(__file__).resolve().parent
-ARQUIVO_EXCEL = PASTA_SCRIPT / "banco.xlsx"
+ARQUIVO_EXCEL = PASTA_PLANILHA / "banco.xlsx"
 ABA = "Controle de Estoque"
 BANCO = PASTA_SCRIPT / "banco.db"
 
