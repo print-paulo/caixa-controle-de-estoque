@@ -16,7 +16,7 @@ from pathlib import Path
 import pandas as pd
 
 PASTA_SCRIPT = Path(__file__).resolve().parent # Caminho absoluto da pasta onde está este script
-PASTA_PLANILHAS = Path("./planilha").resolve() # Caminho absoluto da pasta "planilha" ao lado deste script
+PASTA_PLANILHAS = Path("../planilhas").resolve() # Caminho absoluto da pasta "planilha" ao lado deste script
 BANCO = PASTA_SCRIPT / "banco.db" # Caminho absoluto do banco SQLite a ser criado na mesma pasta deste script
 
 
