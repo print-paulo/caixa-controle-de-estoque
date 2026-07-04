@@ -16,6 +16,7 @@ def criar_tabelas(conn): # Cria as tabelas categoria, produto e estoque no banco
     conn.execute("""
         CREATE TABLE IF NOT EXISTS produto (
             id_produto INTEGER PRIMARY KEY AUTOINCREMENT,
+            ativo INTEGER NOT NULL DEFAULT 1,
             id_categoria INTEGER,
             codigo_barras TEXT UNIQUE,
             nome_produto TEXT NOT NULL,
