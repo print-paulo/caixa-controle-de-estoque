@@ -5,6 +5,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 from utils.leitor_barras import codigo_lido
 from utils.conectar_banco import conectar_banco
+from utils.validacoes import validar_nao_negativo
 
 
 def obter_ou_criar_categoria(conn, nome_categoria):
@@ -119,8 +120,7 @@ def adicionar_codigo_barras_com_leitor(id_produto):
 
 
 def adicionar_quantidade(id_produto, quantidade):
-    if quantidade is not None and quantidade < 0:
-        raise ValueError("Quantidade não pode ser negativa.")
+    validar_nao_negativo(quantidade, "Quantidade", feminino=True)
     return _atualizar_campo_produto(id_produto, "quantidade", quantidade)
 
 
@@ -133,32 +133,27 @@ def adicionar_unidade(id_produto, unidade):
 
 
 def adicionar_valor_unitario(id_produto, valor_unitario):
-    if valor_unitario is None or valor_unitario < 0:
-        raise ValueError("Valor unitário não pode ser negativo.")
+    validar_nao_negativo(valor_unitario, "Valor unitário", permitir_none=False)
     return _atualizar_campo_produto(id_produto, "valor_unitario", valor_unitario)
 
 
 # ---------- campos da tabela estoque ----------
 
 def adicionar_estoque_deposito(id_produto, valor):
-    if valor is not None and valor < 0:
-        raise ValueError("Estoque de depósito não pode ser negativo.")
+    validar_nao_negativo(valor, "Estoque de depósito")
     return _atualizar_campo_estoque(id_produto, "estoque_deposito", valor)
 
 
 def adicionar_estoque_exposicao(id_produto, valor):
-    if valor is not None and valor < 0:
-        raise ValueError("Estoque de exposição não pode ser negativo.")
+    validar_nao_negativo(valor, "Estoque de exposição")
     return _atualizar_campo_estoque(id_produto, "estoque_exposicao", valor)
 
 
 def adicionar_capacidade_exposicao(id_produto, valor):
-    if valor is not None and valor < 0:
-        raise ValueError("Capacidade de exposição não pode ser negativa.")
+    validar_nao_negativo(valor, "Capacidade de exposição", feminino=True)
     return _atualizar_campo_estoque(id_produto, "capacidade_exposicao", valor)
 
 
 def adicionar_estoque_minimo(id_produto, valor):
-    if valor is not None and valor < 0:
-        raise ValueError("Estoque mínimo não pode ser negativo.")
+    validar_nao_negativo(valor, "Estoque mínimo")
     return _atualizar_campo_estoque(id_produto, "estoque_minimo", valor)

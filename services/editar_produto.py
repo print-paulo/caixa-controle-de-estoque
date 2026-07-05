@@ -6,6 +6,7 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 from services.buscar_produto import buscar_por_id, buscar_nome_por_id, buscar_codigo_barras_por_id, buscar_categoria_por_id, buscar_quantidade_por_id, buscar_medida_quantidade_por_id, buscar_unidade_por_id, buscar_valor_unitario_por_id
 from utils.leitor_barras import codigo_lido
 from utils.conectar_banco import conectar_banco
+from utils.validacoes import validar_nao_negativo
 
 PASTA_SCRIPT = Path(__file__).resolve().parent
 BANCO = PASTA_SCRIPT.parent / "database" / "banco.db"
@@ -110,9 +111,8 @@ def editar_codigo_barras_com_leitor(id_produto):
 
 
 def editar_quantidade(id_produto, nova_quantidade):
-    if nova_quantidade is not None and nova_quantidade < 0:
-        raise ValueError("Quantidade não pode ser negativa.")
-    elif nova_quantidade == None:
+    validar_nao_negativo(nova_quantidade, "Quantidade", feminino=True)
+    if nova_quantidade is None:
         return buscar_quantidade_por_id(id_produto) # Se a quantidade for None, não faz nada e retorna a quantidade atual.
     return _atualizar_campo_produto(id_produto, "quantidade", nova_quantidade)
 
@@ -130,34 +130,29 @@ def editar_unidade(id_produto, nova_unidade):
 
 
 def editar_valor_unitario(id_produto, novo_valor):
-    if novo_valor == None:
+    if novo_valor is None:
         return buscar_valor_unitario_por_id(id_produto) # Se o valor unitário for None, não faz nada e retorna o valor atual.
-    elif novo_valor < 0:
-        raise ValueError("Valor unitário não pode ser negativo.")
+    validar_nao_negativo(novo_valor, "Valor unitário")
     return _atualizar_campo_produto(id_produto, "valor_unitario", novo_valor)
 
 
 # ---------- campos da tabela estoque ----------
 
 def editar_estoque_deposito(id_produto, novo_valor):
-    if novo_valor is not None and novo_valor < 0:
-        raise ValueError("Estoque de depósito não pode ser negativo.")
+    validar_nao_negativo(novo_valor, "Estoque de depósito")
     return _atualizar_campo_estoque(id_produto, "estoque_deposito", novo_valor)
 
 
 def editar_estoque_exposicao(id_produto, novo_valor):
-    if novo_valor is not None and novo_valor < 0:
-        raise ValueError("Estoque de exposição não pode ser negativo.")
+    validar_nao_negativo(novo_valor, "Estoque de exposição")
     return _atualizar_campo_estoque(id_produto, "estoque_exposicao", novo_valor)
 
 
 def editar_capacidade_exposicao(id_produto, novo_valor):
-    if novo_valor is not None and novo_valor < 0:
-        raise ValueError("Capacidade de exposição não pode ser negativa.")
+    validar_nao_negativo(novo_valor, "Capacidade de exposição", feminino=True)
     return _atualizar_campo_estoque(id_produto, "capacidade_exposicao", novo_valor)
 
 
 def editar_estoque_minimo(id_produto, novo_valor):
-    if novo_valor is not None and novo_valor < 0:
-        raise ValueError("Estoque mínimo não pode ser negativo.")
+    validar_nao_negativo(novo_valor, "Estoque mínimo")
     return _atualizar_campo_estoque(id_produto, "estoque_minimo", novo_valor)
