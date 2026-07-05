@@ -6,6 +6,7 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 from utils.leitor_barras import codigo_lido
 from utils.conectar_banco import conectar_banco
 from utils.validacoes import validar_nao_negativo
+from utils.db_campos import atualizar_campo_produto, atualizar_campo_estoque
 
 
 def obter_ou_criar_categoria(conn, nome_categoria):
@@ -29,33 +30,12 @@ def obter_ou_criar_categoria(conn, nome_categoria):
 
 def _atualizar_campo_produto(id_produto, coluna, valor):
     """Função interna: faz o UPDATE de uma única coluna da tabela produto."""
-    conn = conectar_banco()
-    try:
-        conn.execute(f"UPDATE produto SET {coluna} = ? WHERE id_produto = ?", (valor, id_produto))
-        conn.commit()
-        return True
-    except sqlite3.IntegrityError as e:
-        conn.rollback()
-        raise ValueError(f"Erro ao adicionar {coluna}: {e}")
-    finally:
-        conn.close()
+    return atualizar_campo_produto(id_produto, coluna, valor, contexto="adicionar")
 
 
 def _atualizar_campo_estoque(id_produto, coluna, valor):
     """Função interna: faz o UPDATE de uma única coluna da tabela estoque."""
-    conn = conectar_banco()
-    try:
-        conn.execute(
-            f"UPDATE estoque SET {coluna} = ?, ultima_atualizacao = CURRENT_TIMESTAMP WHERE id_produto = ?",
-            (valor, id_produto),
-        )
-        conn.commit()
-        return True
-    except sqlite3.IntegrityError as e:
-        conn.rollback()
-        raise ValueError(f"Erro ao adicionar {coluna}: {e}")
-    finally:
-        conn.close()
+    return atualizar_campo_estoque(id_produto, coluna, valor, contexto="adicionar")
 
 
 def cadastrar_produto_base(nome_produto):

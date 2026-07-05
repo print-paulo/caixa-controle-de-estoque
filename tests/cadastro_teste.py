@@ -8,7 +8,7 @@ from utils.leitor_barras import codigo_lido
 
 if __name__ == "__main__":
     # Teste rápido manual: cadastra o básico e vai completando campo a campo
-    id_produto = cadastrar_produto_base(input("Nome do produto: "))
+    id_produto = cadastrar_produto_base(input("Nome do produto: ").upper())
     adicionar_categoria(id_produto, input("Categoria: ").upper())
     adicionar_codigo_barras_com_leitor(id_produto)
     adicionar_quantidade(id_produto, int(input("Quantidade: ")))

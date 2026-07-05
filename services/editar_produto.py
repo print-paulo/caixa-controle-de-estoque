@@ -7,6 +7,7 @@ from services.buscar_produto import buscar_por_id, buscar_nome_por_id, buscar_co
 from utils.leitor_barras import codigo_lido
 from utils.conectar_banco import conectar_banco
 from utils.validacoes import validar_nao_negativo
+from utils.db_campos import atualizar_campo_produto, atualizar_campo_estoque
 
 PASTA_SCRIPT = Path(__file__).resolve().parent
 BANCO = PASTA_SCRIPT.parent / "database" / "banco.db"
@@ -19,40 +20,12 @@ def _produto_existe(id_produto):
 
 def _atualizar_campo_produto(id_produto, coluna, valor):
     """Função interna: faz o UPDATE de uma única coluna da tabela produto."""
-    _produto_existe(id_produto)
-    conn = conectar_banco()
-    try:
-        conn.execute(f"UPDATE produto SET {coluna} = ? WHERE id_produto = ?", (valor, id_produto))
-        conn.commit()
-        return True
-    except sqlite3.IntegrityError as e:
-        conn.rollback()
-        raise ValueError(f"Erro ao editar {coluna}: {e}")
-    finally:
-        conn.close()
+    return atualizar_campo_produto(id_produto, coluna, valor, contexto="editar", validar_existe=_produto_existe)
 
 
 def _atualizar_campo_estoque(id_produto, coluna, valor):
     """Função interna: faz o UPDATE de uma única coluna da tabela estoque."""
-    conn = conectar_banco()
-    try:
-        existe = conn.execute(
-            "SELECT 1 FROM estoque WHERE id_produto = ?", (id_produto,)
-        ).fetchone()
-        if existe is None:
-            raise ValueError(f"Não existe linha de estoque para o produto {id_produto}.")
-
-        conn.execute(
-            f"UPDATE estoque SET {coluna} = ?, ultima_atualizacao = CURRENT_TIMESTAMP WHERE id_produto = ?",
-            (valor, id_produto),
-        )
-        conn.commit()
-        return True
-    except sqlite3.IntegrityError as e:
-        conn.rollback()
-        raise ValueError(f"Erro ao editar {coluna}: {e}")
-    finally:
-        conn.close()
+    return atualizar_campo_estoque(id_produto, coluna, valor, contexto="editar", exigir_existente=True)
 
 
 # ---------- campos da tabela produto ----------
