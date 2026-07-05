@@ -1,9 +1,9 @@
 import sqlite3
+import sys
 from pathlib import Path
 
-
-PASTA_SCRIPT = Path(__file__).resolve().parent # Caminho absoluto da pasta onde está este script
-BANCO = PASTA_SCRIPT / "banco.db" # Caminho absoluto do banco SQLite a ser criado na mesma pasta deste script
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+from utils.conectar_banco import conectar_banco
 
 
 def criar_tabelas(conn): # Cria as tabelas categoria, produto e estoque no banco SQLite, se não existirem.
@@ -42,4 +42,5 @@ def criar_tabelas(conn): # Cria as tabelas categoria, produto e estoque no banco
     conn.commit()
 
 if __name__ == "__main__":
-    criar_tabelas(conn=sqlite3.connect(BANCO))
+    conn = conectar_banco() # Conecta ao banco SQLite, criando o arquivo se não existir
+    criar_tabelas(conn)

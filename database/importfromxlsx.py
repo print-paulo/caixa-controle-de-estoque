@@ -11,9 +11,12 @@ Estoque Mínimo | Estoque Atual | Valor Unitário | Valor Total | Status | Últi
 
 import re
 import sqlite3
+import sys
+import pandas as pd
 from pathlib import Path
 
-import pandas as pd
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+from utils.conectar_banco import conectar_banco
 
 PASTA_SCRIPT = Path(__file__).resolve().parent # Caminho absoluto da pasta onde está este script
 PASTA_PLANILHAS = Path("../planilhas").resolve() # Caminho absoluto da pasta "planilha" ao lado deste script
@@ -142,7 +145,7 @@ def importar(): # Função principal que importa todos os arquivos .xlsx da past
         print(f"Nenhum .xlsx encontrado em: {PASTA_PLANILHAS}")
         return
 
-    conn = sqlite3.connect(BANCO)
+    conn = conectar_banco() # Conecta ao banco SQLite, criando o arquivo se não existir
     conn.execute("PRAGMA foreign_keys = ON")
     criar_tabelas(conn)
     cursor = conn.cursor()

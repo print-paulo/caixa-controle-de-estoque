@@ -1,14 +1,13 @@
 import sqlite3
+import sys
 from pathlib import Path
 
-PASTA_SCRIPT = Path(__file__).resolve().parent
-BANCO = PASTA_SCRIPT.parent / "database" / "banco.db"
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+from utils.conectar_banco import conectar_banco
 
-def conectar():
-    return sqlite3.connect(BANCO)
 
 def buscar_por_codigo_barras(codigo):
-    conn = conectar()
+    conn = conectar_banco()
     cursor = conn.execute("""
         SELECT *
         FROM produto
@@ -26,7 +25,7 @@ def buscar_por_codigo_barras(codigo):
 # produto = buscar_por_codigo_barras(codigo)
 
 def buscar_por_nome(nome):
-    conn = conectar()
+    conn = conectar_banco()
     cursor = conn.execute("""
         SELECT *
         FROM produto
@@ -40,7 +39,7 @@ def buscar_por_nome(nome):
     return produtos
 
 def buscar_por_id(id_produto):
-    conn = conectar()
+    conn = conectar_banco()
     cursor = conn.execute("""
         SELECT *
         FROM produto
@@ -54,7 +53,7 @@ def buscar_por_id(id_produto):
     return produto
 
 def buscar_nome_por_id(id_produto):
-    conn = conectar()
+    conn = conectar_banco()
     cursor = conn.execute("""
         SELECT nome_produto
         FROM produto
@@ -67,7 +66,7 @@ def buscar_nome_por_id(id_produto):
     return resultado[0] if resultado else None
 
 def buscar_categoria_por_id(id_produto):
-    conn = conectar()
+    conn = conectar_banco()
     cursor = conn.execute("""
         SELECT c.nome_categoria
         FROM produto p
@@ -81,7 +80,7 @@ def buscar_categoria_por_id(id_produto):
     return resultado[0] if resultado else None
 
 def buscar_codigo_barras_por_id(id_produto):
-    conn = conectar()
+    conn = conectar_banco()
     cursor = conn.execute("""
         SELECT codigo_barras
         FROM produto
@@ -94,7 +93,7 @@ def buscar_codigo_barras_por_id(id_produto):
     return resultado[0] if resultado else None
 
 def buscar_quantidade_por_id(id_produto):
-    conn = conectar()
+    conn = conectar_banco()
     cursor = conn.execute("""
         SELECT quantidade
         FROM produto
@@ -107,7 +106,7 @@ def buscar_quantidade_por_id(id_produto):
     return resultado[0] if resultado else None
 
 def buscar_medida_quantidade_por_id(id_produto):
-    conn = conectar()
+    conn = conectar_banco()
     cursor = conn.execute("""
         SELECT medida_quantidade
         FROM produto
@@ -120,7 +119,7 @@ def buscar_medida_quantidade_por_id(id_produto):
     return resultado[0] if resultado else None
 
 def buscar_unidade_por_id(id_produto):
-    conn = conectar()
+    conn = conectar_banco()
     cursor = conn.execute("""
         SELECT unidade
         FROM produto
@@ -133,7 +132,7 @@ def buscar_unidade_por_id(id_produto):
     return resultado[0] if resultado else None
 
 def buscar_valor_unitario_por_id(id_produto):
-    conn = conectar()
+    conn = conectar_banco()
     cursor = conn.execute("""
         SELECT valor_unitario
         FROM produto
@@ -146,7 +145,7 @@ def buscar_valor_unitario_por_id(id_produto):
     return resultado[0] if resultado else None
 
 def listar_todos():
-    conn = conectar()
+    conn = conectar_banco()
     cursor = conn.execute("""
         SELECT *
         FROM produto

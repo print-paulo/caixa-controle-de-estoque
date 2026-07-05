@@ -4,16 +4,7 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 from utils.leitor_barras import codigo_lido
-
-# services/ e database/ são pastas irmãs, então sobe um nível e desce em database/
-PASTA_SCRIPT = Path(__file__).resolve().parent
-BANCO = PASTA_SCRIPT.parent / "database" / "banco.db"
-
-
-def conectar():
-    conn = sqlite3.connect(BANCO)
-    conn.execute("PRAGMA foreign_keys = ON")
-    return conn
+from utils.conectar_banco import conectar_banco
 
 
 def obter_ou_criar_categoria(conn, nome_categoria):
@@ -37,7 +28,7 @@ def obter_ou_criar_categoria(conn, nome_categoria):
 
 def _atualizar_campo_produto(id_produto, coluna, valor):
     """Função interna: faz o UPDATE de uma única coluna da tabela produto."""
-    conn = conectar()
+    conn = conectar_banco()
     try:
         conn.execute(f"UPDATE produto SET {coluna} = ? WHERE id_produto = ?", (valor, id_produto))
         conn.commit()
@@ -51,7 +42,7 @@ def _atualizar_campo_produto(id_produto, coluna, valor):
 
 def _atualizar_campo_estoque(id_produto, coluna, valor):
     """Função interna: faz o UPDATE de uma única coluna da tabela estoque."""
-    conn = conectar()
+    conn = conectar_banco()
     try:
         conn.execute(
             f"UPDATE estoque SET {coluna} = ?, ultima_atualizacao = CURRENT_TIMESTAMP WHERE id_produto = ?",
@@ -75,7 +66,7 @@ def cadastrar_produto_base(nome_produto):
     if not nome_produto or not nome_produto.strip():
         raise ValueError("Nome do produto não pode ser vazio.")
 
-    conn = conectar()
+    conn = conectar_banco()
     try:
         cursor = conn.execute(
             "INSERT INTO produto (nome_produto) VALUES (?)", (nome_produto.strip(),)
@@ -100,7 +91,7 @@ def cadastrar_produto_base(nome_produto):
 # ---------- campos da tabela produto ----------
 
 def adicionar_categoria(id_produto, nome_categoria):
-    conn = conectar()
+    conn = conectar_banco()
     try:
         id_categoria = obter_ou_criar_categoria(conn, nome_categoria)
         conn.execute("UPDATE produto SET id_categoria = ? WHERE id_produto = ?", (id_categoria, id_produto))

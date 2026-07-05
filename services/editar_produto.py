@@ -5,15 +5,10 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 from services.buscar_produto import buscar_por_id, buscar_nome_por_id, buscar_codigo_barras_por_id, buscar_categoria_por_id, buscar_quantidade_por_id, buscar_medida_quantidade_por_id, buscar_unidade_por_id, buscar_valor_unitario_por_id
 from utils.leitor_barras import codigo_lido
+from utils.conectar_banco import conectar_banco
 
 PASTA_SCRIPT = Path(__file__).resolve().parent
 BANCO = PASTA_SCRIPT.parent / "database" / "banco.db"
-
-
-def conectar():
-    conn = sqlite3.connect(BANCO)
-    conn.execute("PRAGMA foreign_keys = ON")
-    return conn
 
 
 def _produto_existe(id_produto):
@@ -24,7 +19,7 @@ def _produto_existe(id_produto):
 def _atualizar_campo_produto(id_produto, coluna, valor):
     """Função interna: faz o UPDATE de uma única coluna da tabela produto."""
     _produto_existe(id_produto)
-    conn = conectar()
+    conn = conectar_banco()
     try:
         conn.execute(f"UPDATE produto SET {coluna} = ? WHERE id_produto = ?", (valor, id_produto))
         conn.commit()
@@ -38,7 +33,7 @@ def _atualizar_campo_produto(id_produto, coluna, valor):
 
 def _atualizar_campo_estoque(id_produto, coluna, valor):
     """Função interna: faz o UPDATE de uma única coluna da tabela estoque."""
-    conn = conectar()
+    conn = conectar_banco()
     try:
         existe = conn.execute(
             "SELECT 1 FROM estoque WHERE id_produto = ?", (id_produto,)
@@ -69,7 +64,7 @@ def editar_nome_produto(id_produto, novo_nome):
 
 def editar_categoria(id_produto, nova_categoria):
     """Recebe o NOME da categoria; busca ou cria a categoria e associa o id ao produto."""
-    conn = conectar()
+    conn = conectar_banco()
     try:
         id_categoria = None
         if nova_categoria and nova_categoria.strip():

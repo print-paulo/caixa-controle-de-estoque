@@ -1,17 +1,13 @@
 import sqlite3
+import sys
 from pathlib import Path
 
-PASTA_SCRIPT = Path(__file__).resolve().parent
-BANCO = PASTA_SCRIPT.parent / "database" / "banco.db"
-
-def conectar():
-    conn = sqlite3.connect(BANCO)
-    conn.execute("PRAGMA foreign_keys = ON")
-    return conn
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+from utils.conectar_banco import conectar_banco
 
 
 def excluir_produto(id_produto):
-    conn = conectar()
+    conn = conectar_banco()
     try:
         cursor = conn.execute("""
             UPDATE produto
@@ -29,7 +25,7 @@ def excluir_produto(id_produto):
 
 
 def reativar_produto(id_produto):
-    conn = conectar()
+    conn = conectar_banco()
     try:
         cursor = conn.execute("""
             UPDATE produto
