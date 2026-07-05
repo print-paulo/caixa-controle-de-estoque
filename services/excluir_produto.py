@@ -6,15 +6,16 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 from utils.conectar_banco import conectar_banco
 
 
-def excluir_produto(id_produto):
+def _definir_ativo(id_produto, ativo):
+    """Função interna: alterna o campo `ativo` do produto, indo de/para o estado oposto."""
     conn = conectar_banco()
     try:
         cursor = conn.execute("""
             UPDATE produto
-            SET ativo = 0
+            SET ativo = ?
             WHERE id_produto = ?
-            AND ativo = 1
-        """, (id_produto,))
+            AND ativo = ?
+        """, (ativo, id_produto, 1 - ativo))
 
         conn.commit()
 
@@ -22,21 +23,11 @@ def excluir_produto(id_produto):
 
     finally:
         conn.close()
+
+
+def excluir_produto(id_produto):
+    return _definir_ativo(id_produto, ativo=0)
 
 
 def reativar_produto(id_produto):
-    conn = conectar_banco()
-    try:
-        cursor = conn.execute("""
-            UPDATE produto
-            SET ativo = 1
-            WHERE id_produto = ?
-            AND ativo = 0
-        """, (id_produto,))
-
-        conn.commit()
-
-        return cursor.rowcount > 0
-
-    finally:
-        conn.close()
+    return _definir_ativo(id_produto, ativo=1)
