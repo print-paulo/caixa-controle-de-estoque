@@ -1,6 +1,6 @@
 def codigo_lido():
     while True:
-        codigo = input("Passe o produto").strip()
+        codigo = input("Passe o produto: ").strip()
 
         if codigo.lower() == "sair": #Temporario pq precisa dps fazer que aperte o botão e saia
             return None
