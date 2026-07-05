@@ -52,18 +52,17 @@ def buscar_por_id(id_produto):
 
     return produto
 
-def buscar_nome_por_id(id_produto):
+def _buscar_campo_por_id(id_produto, coluna):
+    """Função interna: busca o valor de uma única coluna da tabela produto pelo id."""
     conn = conectar_banco()
-    cursor = conn.execute("""
-        SELECT nome_produto
-        FROM produto
-        WHERE id_produto = ?
-    """, (id_produto,))
-
+    cursor = conn.execute(f"SELECT {coluna} FROM produto WHERE id_produto = ?", (id_produto,))
     resultado = cursor.fetchone()
     conn.close()
-
     return resultado[0] if resultado else None
+
+
+def buscar_nome_por_id(id_produto):
+    return _buscar_campo_por_id(id_produto, "nome_produto")
 
 def buscar_categoria_por_id(id_produto):
     conn = conectar_banco()
@@ -80,69 +79,19 @@ def buscar_categoria_por_id(id_produto):
     return resultado[0] if resultado else None
 
 def buscar_codigo_barras_por_id(id_produto):
-    conn = conectar_banco()
-    cursor = conn.execute("""
-        SELECT codigo_barras
-        FROM produto
-        WHERE id_produto = ?
-    """, (id_produto,))
-
-    resultado = cursor.fetchone()
-    conn.close()
-
-    return resultado[0] if resultado else None
+    return _buscar_campo_por_id(id_produto, "codigo_barras")
 
 def buscar_quantidade_por_id(id_produto):
-    conn = conectar_banco()
-    cursor = conn.execute("""
-        SELECT quantidade
-        FROM produto
-        WHERE id_produto = ?
-    """, (id_produto,))
-
-    resultado = cursor.fetchone()
-    conn.close()
-
-    return resultado[0] if resultado else None
+    return _buscar_campo_por_id(id_produto, "quantidade")
 
 def buscar_medida_quantidade_por_id(id_produto):
-    conn = conectar_banco()
-    cursor = conn.execute("""
-        SELECT medida_quantidade
-        FROM produto
-        WHERE id_produto = ?
-    """, (id_produto,))
-
-    resultado = cursor.fetchone()
-    conn.close()
-
-    return resultado[0] if resultado else None
+    return _buscar_campo_por_id(id_produto, "medida_quantidade")
 
 def buscar_unidade_por_id(id_produto):
-    conn = conectar_banco()
-    cursor = conn.execute("""
-        SELECT unidade
-        FROM produto
-        WHERE id_produto = ?
-    """, (id_produto,))
-
-    resultado = cursor.fetchone()
-    conn.close()
-
-    return resultado[0] if resultado else None
+    return _buscar_campo_por_id(id_produto, "unidade")
 
 def buscar_valor_unitario_por_id(id_produto):
-    conn = conectar_banco()
-    cursor = conn.execute("""
-        SELECT valor_unitario
-        FROM produto
-        WHERE id_produto = ?
-    """, (id_produto,))
-
-    resultado = cursor.fetchone()
-    conn.close()
-
-    return resultado[0] if resultado else None
+    return _buscar_campo_por_id(id_produto, "valor_unitario")
 
 def listar_todos():
     conn = conectar_banco()
