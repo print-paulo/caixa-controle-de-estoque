@@ -149,8 +149,8 @@ def listar_todos():
     cursor = conn.execute("""
         SELECT *
         FROM produto
+        WHERE ativo = 1
         ORDER BY nome_produto
-        AND ativo = 1
     """)
 
     produtos = cursor.fetchall()
