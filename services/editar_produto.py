@@ -1,0 +1,168 @@
+import sqlite3
+import sys
+from pathlib import Path
+
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+from services.buscar_produto import buscar_por_id, buscar_nome_por_id, buscar_codigo_barras_por_id, buscar_categoria_por_id, buscar_quantidade_por_id, buscar_medida_quantidade_por_id, buscar_unidade_por_id, buscar_valor_unitario_por_id
+from utils.leitor_barras import codigo_lido
+
+PASTA_SCRIPT = Path(__file__).resolve().parent
+BANCO = PASTA_SCRIPT.parent / "database" / "banco.db"
+
+
+def conectar():
+    conn = sqlite3.connect(BANCO)
+    conn.execute("PRAGMA foreign_keys = ON")
+    return conn
+
+
+def _produto_existe(id_produto):
+    if buscar_por_id(id_produto) is None:
+        raise ValueError(f"Produto com id {id_produto} não encontrado.")
+
+
+def _atualizar_campo_produto(id_produto, coluna, valor):
+    """Função interna: faz o UPDATE de uma única coluna da tabela produto."""
+    _produto_existe(id_produto)
+    conn = conectar()
+    try:
+        conn.execute(f"UPDATE produto SET {coluna} = ? WHERE id_produto = ?", (valor, id_produto))
+        conn.commit()
+        return True
+    except sqlite3.IntegrityError as e:
+        conn.rollback()
+        raise ValueError(f"Erro ao editar {coluna}: {e}")
+    finally:
+        conn.close()
+
+
+def _atualizar_campo_estoque(id_produto, coluna, valor):
+    """Função interna: faz o UPDATE de uma única coluna da tabela estoque."""
+    conn = conectar()
+    try:
+        existe = conn.execute(
+            "SELECT 1 FROM estoque WHERE id_produto = ?", (id_produto,)
+        ).fetchone()
+        if existe is None:
+            raise ValueError(f"Não existe linha de estoque para o produto {id_produto}.")
+
+        conn.execute(
+            f"UPDATE estoque SET {coluna} = ?, ultima_atualizacao = CURRENT_TIMESTAMP WHERE id_produto = ?",
+            (valor, id_produto),
+        )
+        conn.commit()
+        return True
+    except sqlite3.IntegrityError as e:
+        conn.rollback()
+        raise ValueError(f"Erro ao editar {coluna}: {e}")
+    finally:
+        conn.close()
+
+
+# ---------- campos da tabela produto ----------
+
+def editar_nome_produto(id_produto, novo_nome):
+    if not novo_nome or not novo_nome.strip():
+        return buscar_nome_por_id(id_produto)
+    return _atualizar_campo_produto(id_produto, "nome_produto", novo_nome.strip())
+
+
+def editar_categoria(id_produto, nova_categoria):
+    """Recebe o NOME da categoria; busca ou cria a categoria e associa o id ao produto."""
+    conn = conectar()
+    try:
+        id_categoria = None
+        if nova_categoria and nova_categoria.strip():
+            nova_categoria = nova_categoria.strip()
+            resultado = conn.execute(
+                "SELECT id_categoria FROM categoria WHERE nome_categoria = ?", (nova_categoria,)
+            ).fetchone()
+            if resultado:
+                id_categoria = resultado[0]
+            else:
+                cursor = conn.execute(
+                    "INSERT INTO categoria (nome_categoria) VALUES (?)", (nova_categoria,)
+                )
+                id_categoria = cursor.lastrowid
+        elif not nova_categoria and nova_categoria.strip() == "":
+            return buscar_categoria_por_id(id_produto) # Se a categoria for uma string vazia, não faz nada e retorna a categoria atual.
+        
+        _produto_existe(id_produto)
+        conn.execute("UPDATE produto SET id_categoria = ? WHERE id_produto = ?", (id_categoria, id_produto))
+        conn.commit()
+        return True
+    except sqlite3.IntegrityError as e:
+        conn.rollback()
+        raise ValueError(f"Erro ao editar categoria: {e}")
+    finally:
+        conn.close()
+
+
+def editar_codigo_barras(id_produto, novo_codigo_barras):
+    if not novo_codigo_barras or not novo_codigo_barras.strip():
+        return buscar_codigo_barras_por_id(id_produto) # Se o código de barras for uma string vazia, não faz nada e retorna o código de barras atual.
+    return _atualizar_campo_produto(id_produto, "codigo_barras", novo_codigo_barras)
+
+
+def editar_codigo_barras_com_leitor(id_produto):
+    """Lê o novo código de barras direto do leitor, em vez de receber por parâmetro."""
+    print("Aponte o leitor para o novo código de barras (ou digite 'sair' para cancelar):")
+    codigo = codigo_lido()
+    if codigo is None:
+        print("Edição cancelada.")
+        return False
+    return editar_codigo_barras(id_produto, codigo)
+
+
+def editar_quantidade(id_produto, nova_quantidade):
+    if nova_quantidade is not None and nova_quantidade < 0:
+        raise ValueError("Quantidade não pode ser negativa.")
+    elif nova_quantidade == None:
+        return buscar_quantidade_por_id(id_produto) # Se a quantidade for None, não faz nada e retorna a quantidade atual.
+    return _atualizar_campo_produto(id_produto, "quantidade", nova_quantidade)
+
+
+def editar_medida_quantidade(id_produto, nova_medida):
+    if not nova_medida or not nova_medida.strip():
+        return buscar_medida_quantidade_por_id(id_produto) # Se a medida for uma string vazia, não faz nada e retorna a medida atual.
+    return _atualizar_campo_produto(id_produto, "medida_quantidade", nova_medida)
+
+
+def editar_unidade(id_produto, nova_unidade):
+    if not nova_unidade or not nova_unidade.strip():
+        return buscar_unidade_por_id(id_produto) # Se a unidade for uma string vazia, não faz nada e retorna a unidade atual.
+    return _atualizar_campo_produto(id_produto, "unidade", nova_unidade)
+
+
+def editar_valor_unitario(id_produto, novo_valor):
+    if novo_valor == None:
+        return buscar_valor_unitario_por_id(id_produto) # Se o valor unitário for None, não faz nada e retorna o valor atual.
+    elif novo_valor < 0:
+        raise ValueError("Valor unitário não pode ser negativo.")
+    return _atualizar_campo_produto(id_produto, "valor_unitario", novo_valor)
+
+
+# ---------- campos da tabela estoque ----------
+
+def editar_estoque_deposito(id_produto, novo_valor):
+    if novo_valor is not None and novo_valor < 0:
+        raise ValueError("Estoque de depósito não pode ser negativo.")
+    return _atualizar_campo_estoque(id_produto, "estoque_deposito", novo_valor)
+
+
+def editar_estoque_exposicao(id_produto, novo_valor):
+    if novo_valor is not None and novo_valor < 0:
+        raise ValueError("Estoque de exposição não pode ser negativo.")
+    return _atualizar_campo_estoque(id_produto, "estoque_exposicao", novo_valor)
+
+
+def editar_capacidade_exposicao(id_produto, novo_valor):
+    if novo_valor is not None and novo_valor < 0:
+        raise ValueError("Capacidade de exposição não pode ser negativa.")
+    return _atualizar_campo_estoque(id_produto, "capacidade_exposicao", novo_valor)
+
+
+def editar_estoque_minimo(id_produto, novo_valor):
+    if novo_valor is not None and novo_valor < 0:
+        raise ValueError("Estoque mínimo não pode ser negativo.")
+    return _atualizar_campo_estoque(id_produto, "estoque_minimo", novo_valor)
