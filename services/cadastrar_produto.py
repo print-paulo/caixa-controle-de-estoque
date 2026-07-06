@@ -7,7 +7,7 @@ from utils.leitor_barras import codigo_lido
 from utils.conectar_banco import conectar_banco
 from utils.validacoes import validar_nao_negativo
 from utils.db_campos import atualizar_campo_produto, atualizar_campo_estoque
-
+from services.buscar_produto import buscar_por_codigo_barras
 
 def obter_ou_criar_categoria(conn, nome_categoria):
     """Busca o id da categoria pelo nome; cria se não existir."""
@@ -86,7 +86,16 @@ def adicionar_categoria(id_produto, nome_categoria):
 
 
 def adicionar_codigo_barras(id_produto, codigo_barras):
-    return _atualizar_campo_produto(id_produto, "codigo_barras", codigo_barras)
+    produto = buscar_por_codigo_barras(codigo_barras)
+    if produto is not None:
+        raise ValueError(
+            f"O código de barras '{codigo_barras}' já está cadastrado."
+        )
+    return _atualizar_campo_produto(
+        id_produto,
+        "codigo_barras",
+        codigo_barras
+    )
 
 
 def adicionar_codigo_barras_com_leitor(id_produto):

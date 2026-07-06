@@ -31,3 +31,24 @@ def excluir_produto(id_produto):
 
 def reativar_produto(id_produto):
     return _definir_ativo(id_produto, ativo=1)
+
+def excluir_produto_permanente(id_produto):
+    conn = conectar_banco()
+
+    try:
+        conn.execute("""
+            DELETE FROM estoque
+            WHERE id_produto = ?
+        """, (id_produto,))
+
+        cursor = conn.execute("""
+            DELETE FROM produto
+            WHERE id_produto = ?
+        """, (id_produto,))
+
+        conn.commit()
+
+        return cursor.rowcount > 0
+
+    finally:
+        conn.close()
