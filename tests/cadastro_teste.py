@@ -38,20 +38,16 @@ if __name__ == "__main__":
                 continue
 
             quantidade = int(input("Quantidade: "))
-            while medida := input("Medida da quantidade: ").upper() not in ["MG", "ML", "G", "L", "KG"]:
+            while (medida := input("Medida da quantidade: ").upper()) not in ["MG", "ML", "G", "L", "KG"]:
                 print("Medida inválida. Por favor, escolha uma das medidas válidas. (MG/ML/G/L/KG)\n")
-            while unidade := input("Unidade: ").upper() not in ["UN", "CX"]:
+            
+            while (unidade := input("Unidade: ").upper()) not in ["UN", "CX"]:
                 print("Unidade inválida. Por favor, escolha uma das unidades válidas. (UN/CX)\n")
-            valor = float(input("Valor unitário: "))
-            estoque_deposito = int(input("Estoque disponível (depósito): "))
-            estoque_exposicao = int(input("Estoque em exibição: "))
-
             adicionar_quantidade(id_produto, quantidade)
+            print(medida)
             adicionar_medida_quantidade(id_produto, medida)
+            print(unidade)
             adicionar_unidade(id_produto, unidade)
-            adicionar_valor_unitario(id_produto, valor)
-            adicionar_estoque_deposito(id_produto, estoque_deposito)
-            adicionar_estoque_exposicao(id_produto, estoque_exposicao)
 
             print(f"\nProduto cadastrado com sucesso! ID: {id_produto}")
             break
