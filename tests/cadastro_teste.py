@@ -1,8 +1,8 @@
 import sys
 from pathlib import Path
 
-from services.excluir_produto import excluir_produto_permanente
 sys.path.append(str(Path(__file__).resolve().parent.parent))
+from services.excluir_produto import excluir_produto_permanente
 
 from services.cadastrar_produto import (
     cadastrar_produto_base,
