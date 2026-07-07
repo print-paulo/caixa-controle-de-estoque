@@ -16,3 +16,12 @@ def validar_nao_negativo(valor, nome_campo, feminino=False, permitir_none=True):
  
     if valor < 0:
         raise ValueError(f"{nome_campo} não pode ser {sufixo}.")
+
+
+def validar_positivo(valor, nome_campo):
+    """
+    Valida que `valor` é maior que zero, levantando ValueError caso não seja
+    (usada em casos onde zero ou None não fazem sentido, como quantidade vendida).
+    """
+    if valor is None or valor <= 0:
+        raise ValueError(f"{nome_campo} deve ser maior que zero.")
