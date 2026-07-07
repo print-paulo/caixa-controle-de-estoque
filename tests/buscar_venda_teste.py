@@ -29,7 +29,7 @@ if __name__ == "__main__":
         print(venda)
 
     print("\nTeste com filtro de status agora")
-    status = input("Digite o status pra filtrar (aberta/finalizada/cancelada, ou deixe em branco pra pular): ").strip()
+    status = input("Digite o status pra filtrar (aberta/finalizada/cancelada, ou deixe em branco pra pular): ").strip().upper()
 
     if status:
         print(f"\nAqui é suposto ver só as vendas com status '{status}': ")

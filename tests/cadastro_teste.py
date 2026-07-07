@@ -39,7 +39,7 @@ if __name__ == "__main__":
 
             quantidade = int(input("Quantidade: "))
             medida = input("Medida da quantidade: ").upper()
-            unidade = input("Unidade: ")
+            unidade = input("Unidade: ").upper()
             valor = float(input("Valor unitário: "))
             estoque_deposito = int(input("Estoque disponível (depósito): "))
             estoque_exposicao = int(input("Estoque em exibição: "))

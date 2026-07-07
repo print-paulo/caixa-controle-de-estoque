@@ -102,7 +102,7 @@ def calcular_total_venda(id_venda):
 
 def finalizar_venda(id_venda, forma_pagamento):
     """
-    Marca a venda como 'finalizada' e registra a forma de pagamento.
+    Marca a venda como 'FINALIZADA' e registra a forma de pagamento.
     Recusa finalizar vendas sem nenhum item. Retorna o valor total da venda.
     """
     if not forma_pagamento or not forma_pagamento.strip():
@@ -117,7 +117,7 @@ def finalizar_venda(id_venda, forma_pagamento):
             raise ValueError("Não é possível finalizar uma venda sem itens.")
 
         conn.execute(
-            "UPDATE venda SET forma_pagamento = ?, status = 'finalizada' WHERE id_venda = ?",
+            "UPDATE venda SET forma_pagamento = ?, status = 'FINALIZADA' WHERE id_venda = ?",
             (forma_pagamento.strip(), id_venda),
         )
         conn.commit()
@@ -142,7 +142,7 @@ def cancelar_venda(id_venda):
                 WHERE id_produto = ?
             """, (quantidade, id_produto))
 
-        conn.execute("UPDATE venda SET status = 'cancelada' WHERE id_venda = ?", (id_venda,))
+        conn.execute("UPDATE venda SET status = 'CANCELADA' WHERE id_venda = ?", (id_venda,))
         conn.commit()
     except Exception:
         conn.rollback()
