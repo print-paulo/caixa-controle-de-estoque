@@ -6,7 +6,7 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 from utils.conectar_banco import conectar_banco
 
 
-def criar_tabelas(conn): # Cria as tabelas categoria, produto, estoque, venda e item_venda no banco SQLite, se não existirem.
+def criar_tabelas(conn): # Cria as tabelas categoria, produto, estoque, venda, item_venda, compra e item_compra no banco SQLite, se não existirem.
     conn.execute("""
         CREATE TABLE IF NOT EXISTS categoria (
             id_categoria INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -44,7 +44,7 @@ def criar_tabelas(conn): # Cria as tabelas categoria, produto, estoque, venda e 
             id_venda INTEGER PRIMARY KEY AUTOINCREMENT,
             data_hora TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
             forma_pagamento TEXT,
-            status TEXT NOT NULL DEFAULT 'ABERTA'
+            status TEXT NOT NULL DEFAULT 'aberta'
         )
     """)
     conn.execute("""
@@ -56,6 +56,28 @@ def criar_tabelas(conn): # Cria as tabelas categoria, produto, estoque, venda e 
             valor_unitario_momento REAL NOT NULL,
             sub_total REAL NOT NULL,
             FOREIGN KEY (id_venda) REFERENCES venda(id_venda),
+            FOREIGN KEY (id_produto) REFERENCES produto(id_produto)
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS compra (
+            id_compra INTEGER PRIMARY KEY AUTOINCREMENT,
+            data_hora TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            fornecedor TEXT,
+            status TEXT NOT NULL DEFAULT 'aberta'
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS item_compra (
+            id_item_compra INTEGER PRIMARY KEY AUTOINCREMENT,
+            id_compra INTEGER NOT NULL,
+            id_produto INTEGER NOT NULL,
+            quantidade INTEGER NOT NULL,
+            valor_custo_unitario REAL NOT NULL,
+            margem_lucro REAL NOT NULL,
+            valor_venda_calculado REAL NOT NULL,
+            sub_total REAL NOT NULL,
+            FOREIGN KEY (id_compra) REFERENCES compra(id_compra),
             FOREIGN KEY (id_produto) REFERENCES produto(id_produto)
         )
     """)
