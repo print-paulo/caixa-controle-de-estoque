@@ -6,7 +6,7 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 from utils.conectar_banco import conectar_banco
 
 
-def criar_tabelas(conn): # Cria as tabelas categoria, produto e estoque no banco SQLite, se não existirem.
+def criar_tabelas(conn): # Cria as tabelas categoria, produto, estoque, venda e item_venda no banco SQLite, se não existirem.
     conn.execute("""
         CREATE TABLE IF NOT EXISTS categoria (
             id_categoria INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -36,6 +36,26 @@ def criar_tabelas(conn): # Cria as tabelas categoria, produto e estoque no banco
             capacidade_exposicao INTEGER,
             estoque_minimo INTEGER,
             ultima_atualizacao TIMESTAMP,
+            FOREIGN KEY (id_produto) REFERENCES produto(id_produto)
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS venda (
+            id_venda INTEGER PRIMARY KEY AUTOINCREMENT,
+            data_hora TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            forma_pagamento TEXT,
+            status TEXT NOT NULL DEFAULT 'aberta'
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS item_venda (
+            id_item_venda INTEGER PRIMARY KEY AUTOINCREMENT,
+            id_venda INTEGER NOT NULL,
+            id_produto INTEGER NOT NULL,
+            quantidade INTEGER NOT NULL,
+            valor_unitario_momento REAL NOT NULL,
+            sub_total REAL NOT NULL,
+            FOREIGN KEY (id_venda) REFERENCES venda(id_venda),
             FOREIGN KEY (id_produto) REFERENCES produto(id_produto)
         )
     """)
