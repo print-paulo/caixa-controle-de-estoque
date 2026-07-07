@@ -12,6 +12,7 @@ from services.registrar_compra import (
     finalizar_compra,
     cancelar_compra,
 )
+from tests.cadastro_teste import executar_cadastro
 
 if __name__ == "__main__":
 
@@ -31,7 +32,19 @@ if __name__ == "__main__":
         produto = buscar_por_codigo_barras(codigo)
         if produto is None:
             print("Produto não encontrado ou inativo.\n")
-            continue
+
+            resposta = input("Deseja cadastrar este produto? (S/N): ").strip().upper()
+
+            if resposta == "S":
+                executar_cadastro(codigo)
+
+                produto = buscar_por_codigo_barras(codigo)
+
+                if produto is None:
+                    print("Falha ao cadastrar.")
+                    continue
+            else:
+                continue
 
         nome_produto = produto[4]  # coluna nome_produto
 

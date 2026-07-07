@@ -107,6 +107,21 @@ def adicionar_codigo_barras_com_leitor(id_produto):
         return False
     return adicionar_codigo_barras(id_produto, codigo)
 
+def adicionar_codigo_barras_interativo(id_produto, codigo_barras=None): #Essa função vai servir para caso o usuário queira cadastrar no meio do registro
+    """
+    Adiciona um código de barras ao produto.
+    Se codigo_barras for informado, utiliza esse código.
+    Caso contrário, solicita a leitura pelo leitor.
+    """
+    if codigo_barras is None:
+        print("Aponte o leitor para o código de barras do produto (ou digite 'sair' para cancelar):")
+        codigo_barras = codigo_lido()
+
+        if codigo_barras is None:
+            print("Operação cancelada.")
+            return False
+
+    return adicionar_codigo_barras(id_produto, codigo_barras)
 
 def adicionar_quantidade(id_produto, quantidade):
     validar_nao_negativo(quantidade, "Quantidade", feminino=True)
