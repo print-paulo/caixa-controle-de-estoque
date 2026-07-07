@@ -38,8 +38,10 @@ if __name__ == "__main__":
                 continue
 
             quantidade = int(input("Quantidade: "))
-            medida = input("Medida da quantidade: ").upper()
-            unidade = input("Unidade: ").upper()
+            while medida := input("Medida da quantidade: ").upper() not in ["MG", "ML", "G", "L", "KG"]:
+                print("Medida inválida. Por favor, escolha uma das medidas válidas. (MG/ML/G/L/KG)\n")
+            while unidade := input("Unidade: ").upper() not in ["UN", "CX"]:
+                print("Unidade inválida. Por favor, escolha uma das unidades válidas. (UN/CX)\n")
             valor = float(input("Valor unitário: "))
             estoque_deposito = int(input("Estoque disponível (depósito): "))
             estoque_exposicao = int(input("Estoque em exibição: "))
