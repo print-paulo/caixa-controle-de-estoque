@@ -2,7 +2,7 @@ import sys
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
-from services.editar_produto import editar_nome_produto, editar_categoria, editar_codigo_barras, editar_quantidade, editar_medida_quantidade, editar_unidade, editar_valor_unitario
+from services.editar_produto import editar_nome_produto, editar_categoria, editar_codigo_barras, editar_quantidade, editar_medida_quantidade, editar_unidade, editar_valor_unitario, editar_estoque_deposito, editar_estoque_exposicao
 from services.buscar_produto import buscar_nome_por_id
 
 if __name__ == "__main__":
@@ -31,3 +31,13 @@ if __name__ == "__main__":
     editar_valor_unitario(id_produto, novo_valor_unitario)
 
     print("Valor unitário atualizado.")
+
+    novo_estoque_deposito = input("Novo estoque disponível (depósito): ")
+    novo_estoque_deposito = None if novo_estoque_deposito == "" else int(novo_estoque_deposito) # Permite deixar em branco para não alterar
+    editar_estoque_deposito(id_produto, novo_estoque_deposito)
+
+    novo_estoque_exposicao = input("Novo estoque em exibição: ")
+    novo_estoque_exposicao = None if novo_estoque_exposicao == "" else int(novo_estoque_exposicao) # Permite deixar em branco para não alterar
+    editar_estoque_exposicao(id_produto, novo_estoque_exposicao)
+
+    print("Estoque atualizado.")

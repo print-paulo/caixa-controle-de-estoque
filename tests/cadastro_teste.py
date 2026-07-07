@@ -1,8 +1,9 @@
 import sys
 from pathlib import Path
 
-from services.excluir_produto import excluir_produto_permanente
 sys.path.append(str(Path(__file__).resolve().parent.parent))
+
+from services.excluir_produto import excluir_produto_permanente
 
 from services.cadastrar_produto import (
     cadastrar_produto_base,
@@ -11,7 +12,9 @@ from services.cadastrar_produto import (
     adicionar_quantidade,
     adicionar_medida_quantidade,
     adicionar_unidade,
-    adicionar_valor_unitario
+    adicionar_valor_unitario,
+    adicionar_estoque_deposito,
+    adicionar_estoque_exposicao
 )
 
 if __name__ == "__main__":
@@ -37,11 +40,15 @@ if __name__ == "__main__":
             medida = input("Medida da quantidade: ").upper()
             unidade = input("Unidade: ")
             valor = float(input("Valor unitário: "))
+            estoque_deposito = int(input("Estoque disponível (depósito): "))
+            estoque_exposicao = int(input("Estoque em exibição: "))
 
             adicionar_quantidade(id_produto, quantidade)
             adicionar_medida_quantidade(id_produto, medida)
             adicionar_unidade(id_produto, unidade)
             adicionar_valor_unitario(id_produto, valor)
+            adicionar_estoque_deposito(id_produto, estoque_deposito)
+            adicionar_estoque_exposicao(id_produto, estoque_exposicao)
 
             print(f"\nProduto cadastrado com sucesso! ID: {id_produto}")
             break
