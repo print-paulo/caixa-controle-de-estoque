@@ -2,6 +2,7 @@ import sys
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
+from services.excluir_produto import excluir_produto_permanente
 
 from services.excluir_produto import excluir_produto_permanente
 
