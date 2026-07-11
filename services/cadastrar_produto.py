@@ -191,6 +191,7 @@ def executar_cadastro(codigo_barras=None):
                 adicionar_codigo_barras_com_leitor(id_produto)
                 input_campo_produto("Digite a medida da quantidade: ", adicionar_medida_quantidade, id_produto)
                 input_campo_produto("Digite a unidade do produto: ", adicionar_unidade, id_produto)
+                input_campo_produto("Informe a quantidade minima para se ter em estoqueo: ", adicionar_estoque_minimo, id_produto)
                 break
             except ValueError as e:
                 print(f"\nErro: {e}")
