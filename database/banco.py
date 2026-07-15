@@ -20,7 +20,6 @@ def criar_tabelas(conn): # Cria as tabelas categoria, produto, estoque, venda, i
             id_categoria INTEGER,
             codigo_barras TEXT UNIQUE,
             nome_produto TEXT NOT NULL,
-            quantidade REAL,
             medida_quantidade TEXT,
             unidade TEXT,
             valor_unitario REAL,

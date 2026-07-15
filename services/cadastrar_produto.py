@@ -3,6 +3,7 @@ import sys
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
+from services.excluir_produto import excluir_produto_permanente
 from utils.leitor_barras import codigo_lido
 from utils.conectar_banco import conectar_banco
 from utils.validacoes import validar_nao_negativo
@@ -100,7 +101,6 @@ def adicionar_codigo_barras(id_produto, codigo_barras):
 
 def adicionar_codigo_barras_com_leitor(id_produto):
     """Lê o código de barras direto do leitor, em vez de receber por parâmetro."""
-    print("Aponte o leitor para o código de barras do produto (ou digite 'sair' para cancelar):")
     codigo = codigo_lido()
     if codigo is None:
         print("Operação cancelada.")
@@ -161,3 +161,49 @@ def adicionar_capacidade_exposicao(id_produto, valor):
 def adicionar_estoque_minimo(id_produto, valor):
     validar_nao_negativo(valor, "Estoque mínimo")
     return _atualizar_campo_estoque(id_produto, "estoque_minimo", valor)
+
+# ----------- inputs --------------
+
+def input_campo_produto(prompt, func_adicionar, id_produto, tipo_dado=str):
+    while True:
+        valor = input(prompt).strip().upper()
+        if valor:
+            try:
+                valor_convertido = tipo_dado(valor)  # Valida o tipo de dado
+                print(valor_convertido)
+            except (TypeError, ValueError) as e:
+                print(f"Erro: {e}")
+                continue
+            try:
+                return func_adicionar(id_produto, valor_convertido)
+            except ValueError as e:
+                print(f"Erro: {e}")
+        else:
+            print("Valor não pode ser vazio.")
+
+def input_cadastro_nome_produto():
+    while True:
+        nome = input("Digite o nome do produto: ").strip().upper()
+        if nome:
+            return cadastrar_produto_base(nome)
+        print("Nome do produto não pode ser vazio.")
+
+# ----------- fluxo de cadastro --------------
+def executar_cadastro(codigo_barras=None):
+    while True:
+            try:
+                id_produto = input_cadastro_nome_produto()
+                input_campo_produto("Digite a categoria do produto: ", adicionar_categoria, id_produto)
+                adicionar_codigo_barras_com_leitor(id_produto)
+                input_campo_produto("Digite a medida da quantidade: ", adicionar_medida_quantidade, id_produto)
+                input_campo_produto("Digite a unidade do produto: ", adicionar_unidade, id_produto)
+                input_campo_produto("Digite a capacidade minima de exposição: ", adicionar_capacidade_exposicao, id_produto, int)
+                input_campo_produto("Informe a quantidade minima para se ter em estoque: ", adicionar_estoque_minimo, id_produto, int)
+                break
+            except ValueError as e:
+                print(f"\nErro: {e}")
+
+                # Remove o cadastro incompleto
+                if "id_produto" in locals():
+                    excluir_produto_permanente(id_produto)
+                    del id_produto
