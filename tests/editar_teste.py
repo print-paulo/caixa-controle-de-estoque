@@ -22,7 +22,7 @@ if __name__ == "__main__":
     nova_quantidade = None if nova_quantidade == "" else int(nova_quantidade) # Permite deixar em branco para não alterar
     editar_quantidade(id_produto, nova_quantidade) 
     
-    editar_medida_quantidade(id_produto, input("Nova medida de quantidade: ")).upper()
+    editar_medida_quantidade(id_produto, input("Nova medida de quantidade: ").upper())
     
     editar_unidade(id_produto, input("Nova unidade: ").upper())
     
