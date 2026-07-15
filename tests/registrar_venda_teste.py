@@ -40,9 +40,29 @@ if __name__ == "__main__":
             continue
 
         try:
-            sub_total = adicionar_item_venda(id_venda, codigo, quantidade)
+            resultado = adicionar_item_venda(
+                id_venda,
+                codigo,
+                quantidade
+            )
+
+            sub_total = resultado["subtotal"]
+            estoque_baixo = resultado["estoque_baixo"]
+            quantidade_reposta = resultado["quantidade_reposta"]
+
             total_itens += 1
             print(f"Adicionado: {quantidade}x {nome_produto} = R$ {sub_total:.2f}\n")
+
+            if quantidade_reposta:
+                print(
+                    f"Reposição automática: {quantidade_reposta} unidades."
+                )
+
+            if estoque_baixo:
+                print(
+                    f"Atenção: o produto '{nome_produto}' está abaixo do estoque mínimo."
+                )
+
         except ValueError as e:
             print(f"Erro: {e}\n")
 

@@ -16,77 +16,189 @@ def iniciar_venda():
     finally:
         conn.close()
 
-
 def adicionar_item_venda(id_venda, codigo_barras, quantidade):
     """
-    Adiciona um item a uma venda em aberto, a partir do código de barras lido.
+       Adiciona um item a uma venda em aberto, a partir do código de barras lido.
 
-    Busca o produto ativo, confere se há estoque de exposição suficiente,
-    calcula o sub_total com o valor unitário atual (congelado no momento
-    da venda) e desconta a quantidade do estoque de exposição.
-    Tudo numa única transação: se qualquer passo falhar, nada é salvo.
+       Busca o produto ativo, confere se há estoque de exposição suficiente,
+       calcula o sub_total com o valor unitário atual (congelado no momento
+       da venda) e desconta a quantidade do estoque de exposição.
+       Tudo numa única transação: se qualquer passo falhar, nada é salvo.
 
-    Retorna o sub_total do item adicionado.
-    """
+       Retorna o sub_total do item adicionado.
+       """
     validar_positivo(quantidade, "Quantidade vendida")
-
     conn = conectar_banco()
+
     try:
-        venda = conn.execute(
-            "SELECT status FROM venda WHERE id_venda = ?", (id_venda,)
-        ).fetchone()
-        if venda is None:
-            raise ValueError(f"Venda {id_venda} não encontrada.")
-        if venda[0] != "ABERTA":
-            raise ValueError(f"Venda {id_venda} não está aberta (status atual: '{venda[0]}').")
+        _validar_venda_aberta(conn, id_venda)
 
-        produto = conn.execute("""
-            SELECT id_produto, nome_produto, valor_unitario
-            FROM produto
-            WHERE codigo_barras = ? AND ativo = 1
-        """, (codigo_barras,)).fetchone()
+        id_produto, nome_produto, valor_unitario = _buscar_produto(conn,codigo_barras)
 
-        if produto is None:
-            raise ValueError(f"Produto com código de barras '{codigo_barras}' não encontrado.")
+        quantidade_reposta = _repor_estoque_exposicao(conn, id_produto)
 
-        id_produto, nome_produto, valor_unitario = produto
-
-        if valor_unitario is None:
-            raise ValueError(f"Produto '{nome_produto}' não tem valor unitário cadastrado.")
-
-        estoque = conn.execute(
-            "SELECT estoque_exposicao FROM estoque WHERE id_produto = ?", (id_produto,)
-        ).fetchone()
-        estoque_atual = estoque[0] if estoque and estoque[0] is not None else 0
-
-        if estoque_atual < quantidade:
-            raise ValueError(
-                f"Estoque insuficiente para '{nome_produto}': "
-                f"disponível {estoque_atual}, solicitado {quantidade}."
+        if quantidade_reposta:
+            print(
+                f"Reposição automática: {quantidade_reposta} unidades foram movidas para a exposição."
             )
 
-        sub_total = quantidade * valor_unitario
+        # Agora verifica se há estoque suficiente
+        _validar_estoque(conn,id_produto,quantidade,nome_produto)
 
-        conn.execute("""
-            INSERT INTO item_venda (id_venda, id_produto, quantidade, valor_unitario_momento, sub_total)
-            VALUES (?, ?, ?, ?, ?)
-        """, (id_venda, id_produto, quantidade, valor_unitario, sub_total))
+        sub_total = _calcular_subtotal(nome_produto,valor_unitario,quantidade)
 
-        conn.execute("""
-            UPDATE estoque
-            SET estoque_exposicao = estoque_exposicao - ?, ultima_atualizacao = CURRENT_TIMESTAMP
-            WHERE id_produto = ?
-        """, (quantidade, id_produto))
+        _registrar_item_venda(conn,id_venda,id_produto,quantidade,valor_unitario,sub_total)
+
+        _descontar_estoque(conn,id_produto,quantidade)
+
+        estoque_baixo = _verificar_estoque_minimo(conn, id_produto)
 
         conn.commit()
-        return sub_total
+
+        return {
+            "subtotal": sub_total,
+            "estoque_baixo": estoque_baixo,
+            "quantidade_reposta": quantidade_reposta
+        }
 
     except Exception:
         conn.rollback()
         raise
+
     finally:
         conn.close()
 
+def _validar_venda_aberta(conn, id_venda):
+
+    venda = conn.execute(
+        "SELECT status FROM venda WHERE id_venda = ?",
+        (id_venda,)
+    ).fetchone()
+
+    if venda is None:
+        raise ValueError(
+            f"Venda {id_venda} não encontrada."
+        )
+
+    if venda[0] != "ABERTA":
+        raise ValueError(
+            f"Venda {id_venda} não está aberta (status atual: {venda[0]})."
+        )
+
+def _repor_estoque_exposicao(conn, id_produto):
+    deposito, exposicao, capacidade = _buscar_estoque(conn, id_produto)
+
+    if capacidade is None or capacidade <= 0:
+        return
+
+    if exposicao >= capacidade:
+        return
+
+    falta = capacidade - exposicao
+
+    quantidade_reposta = min(falta, deposito)
+
+    if quantidade_reposta == 0:
+        return
+
+    conn.execute("""
+        UPDATE estoque
+        SET
+            estoque_deposito = estoque_deposito - ?,
+            estoque_exposicao = estoque_exposicao + ?,
+            ultima_atualizacao = CURRENT_TIMESTAMP
+        WHERE id_produto = ?
+    """,(quantidade_reposta,quantidade_reposta,id_produto))
+
+    return quantidade_reposta
+
+def _verificar_estoque_minimo(conn, id_produto):
+
+    deposito, _, minimo = conn.execute("""
+        SELECT
+            estoque_deposito,
+            estoque_exposicao,
+            estoque_minimo
+        FROM estoque
+        WHERE id_produto = ?
+    """, (id_produto,)).fetchone()
+
+    if minimo is None:
+        return
+
+    if deposito <= minimo:
+        return True
+
+    return False
+
+def _validar_estoque(conn, id_produto, quantidade, nome_produto):
+
+    _, exposicao, _ = _buscar_estoque(conn, id_produto)
+
+    if exposicao < quantidade:
+        raise ValueError(
+            f"Estoque insuficiente para '{nome_produto}'. "
+            f"Disponível: {exposicao}.")
+
+def _buscar_produto(conn, codigo_barras):
+    produto = conn.execute("""
+        SELECT id_produto,
+               nome_produto,
+               valor_unitario
+        FROM produto
+        WHERE codigo_barras = ?
+          AND ativo = 1
+    """, (codigo_barras,)).fetchone()
+
+    if produto is None:
+        raise ValueError(f"Produto com código de barras '{codigo_barras}' não encontrado.")
+
+    return produto
+
+def _buscar_estoque(conn, id_produto):
+    estoque = conn.execute("""
+        SELECT
+            estoque_deposito,
+            estoque_exposicao,
+            capacidade_exposicao
+        FROM estoque
+        WHERE id_produto = ?
+    """, (id_produto,)).fetchone()
+
+    if estoque is None:
+        raise ValueError("Estoque do produto não encontrado.")
+
+    return estoque
+
+def _calcular_subtotal(nome_produto,valor_unitario, quantidade):
+
+    if valor_unitario is None:
+        raise ValueError(f"O produto '{nome_produto}' não possui preço cadastrado.")
+    return quantidade * valor_unitario
+
+def _registrar_item_venda(conn, id_venda, id_produto, quantidade, valor_unitario, sub_total):
+
+    conn.execute("""
+        INSERT INTO item_venda
+        (
+            id_venda,
+            id_produto,
+            quantidade,
+            valor_unitario_momento,
+            sub_total
+        )
+        VALUES (?, ?, ?, ?, ?)
+    """, (id_venda, id_produto, quantidade, valor_unitario, sub_total))
+
+def _descontar_estoque(conn,id_produto,quantidade):
+
+    conn.execute("""
+        UPDATE estoque
+        SET
+            estoque_exposicao = estoque_exposicao - ?,
+            ultima_atualizacao = CURRENT_TIMESTAMP
+        WHERE id_produto = ?
+    """,(quantidade,id_produto))
 
 def calcular_total_venda(id_venda):
     """Soma os sub_total de todos os itens da venda. Retorna 0.0 se não houver itens."""
