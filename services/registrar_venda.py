@@ -35,9 +35,6 @@ def adicionar_item_venda(id_venda, codigo_barras, quantidade):
 
         id_produto, nome_produto, valor_unitario = _buscar_produto(conn,codigo_barras)
 
-        # Sempre tenta completar a exposição antes da venda
-        _repor_estoque_exposicao(conn, id_produto)
-
         quantidade_reposta = _repor_estoque_exposicao(conn, id_produto)
 
         if quantidade_reposta:
