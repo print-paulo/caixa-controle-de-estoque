@@ -9,7 +9,6 @@ Espera um arquivo "Estoque.xlsx" na MESMA PASTA deste script, com a aba
 Estoque Mínimo | Estoque Atual | Valor Unitário | Valor Total | Status | Última Atualização
 """
 
-import re
 import sqlite3
 import sys
 import pandas as pd
@@ -22,21 +21,6 @@ from database.banco import criar_tabelas
 PASTA_SCRIPT = Path(__file__).resolve().parent # Caminho absoluto da pasta onde está este script
 PASTA_PLANILHAS = Path("../planilhas").resolve() # Caminho absoluto da pasta "planilha" ao lado deste script
 BANCO = PASTA_SCRIPT / "banco.db" # Caminho absoluto do banco SQLite a ser criado na mesma pasta deste script
-
-
-def separar_quantidade(valor): # Separa o valor da quantidade do texto.
-    """'750 ml' -> (750.0, 'ml'). Se não der pra separar, devolve (None, texto original)."""
-    if valor is None or (isinstance(valor, float) and pd.isna(valor)):
-        return None, None
-    texto = str(valor).strip().upper()
-    match = re.match(r"([\d.,]+)\s*([a-zA-Zçã]*)", texto)
-    if match and match.group(1):
-        numero = match.group(1).replace(",", ".")
-        try:
-            return float(numero), (match.group(2) or None)
-        except ValueError:
-            return None, texto
-    return None, texto
 
 
 def linha_valida(row): # Verifica se uma linha da planilha é válida.
@@ -64,7 +48,7 @@ def importar_arquivo(cursor, caminho_arquivo): # Importa um único arquivo .xlsx
         # codigo_barras fica sempre nulo aqui - será preenchido manualmente depois via UPDATE
         codigo = None
         nome_produto = str(row["Produto"]).strip()
-        quantidade, medida = separar_quantidade(row.get("Quantidade"))
+        medida_quantidade = str(row.get("Quantidade")).strip().upper() if pd.notna(row.get("Quantidade")) else None
         unidade = str(row["Unidade"]).strip() if pd.notna(row.get("Unidade")) else None
         minimo = int(row["Estoque Mínimo"]) if pd.notna(row.get("Estoque Mínimo")) else 0
         # A planilha só tem "Estoque Atual" (um valor só), sem distinguir depósito/exposição.
@@ -78,9 +62,9 @@ def importar_arquivo(cursor, caminho_arquivo): # Importa um único arquivo .xlsx
         # Sem coluna "Categoria" nesta planilha -> fica sem categoria (id_categoria = NULL)
         cursor.execute("""
             INSERT INTO produto
-            (codigo_barras, nome_produto, quantidade, medida_quantidade, unidade, valor_unitario)
-            VALUES (?, ?, ?, ?, ?, ?)
-        """, (codigo, nome_produto, quantidade, medida, unidade, valor_unitario))
+            (codigo_barras, nome_produto, medida_quantidade, unidade, valor_unitario)
+            VALUES (?, ?, ?, ?, ?)
+        """, (codigo, nome_produto, medida_quantidade, unidade, valor_unitario))
         id_produto = cursor.lastrowid
 
         cursor.execute("""

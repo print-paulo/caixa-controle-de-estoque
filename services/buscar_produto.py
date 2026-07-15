@@ -81,9 +81,6 @@ def buscar_categoria_por_id(id_produto):
 def buscar_codigo_barras_por_id(id_produto):
     return _buscar_campo_por_id(id_produto, "codigo_barras")
 
-def buscar_quantidade_por_id(id_produto):
-    return _buscar_campo_por_id(id_produto, "quantidade")
-
 def buscar_medida_quantidade_por_id(id_produto):
     return _buscar_campo_por_id(id_produto, "medida_quantidade")
 

@@ -83,13 +83,6 @@ def editar_codigo_barras_com_leitor(id_produto):
     return editar_codigo_barras(id_produto, codigo)
 
 
-def editar_quantidade(id_produto, nova_quantidade):
-    validar_nao_negativo(nova_quantidade, "Quantidade", feminino=True)
-    if nova_quantidade is None:
-        return buscar_quantidade_por_id(id_produto) # Se a quantidade for None, não faz nada e retorna a quantidade atual.
-    return _atualizar_campo_produto(id_produto, "quantidade", nova_quantidade)
-
-
 def editar_medida_quantidade(id_produto, nova_medida):
     if not nova_medida or not nova_medida.strip():
         return buscar_medida_quantidade_por_id(id_produto) # Se a medida for uma string vazia, não faz nada e retorna a medida atual.

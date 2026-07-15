@@ -123,10 +123,6 @@ def adicionar_codigo_barras_interativo(id_produto, codigo_barras=None): #Essa fu
 
     return adicionar_codigo_barras(id_produto, codigo_barras)
 
-def adicionar_quantidade(id_produto, quantidade):
-    validar_nao_negativo(quantidade, "Quantidade", feminino=True)
-    return _atualizar_campo_produto(id_produto, "quantidade", quantidade)
-
 
 def adicionar_medida_quantidade(id_produto, medida_quantidade):
     return _atualizar_campo_produto(id_produto, "medida_quantidade", medida_quantidade)
