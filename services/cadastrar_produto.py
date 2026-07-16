@@ -99,29 +99,37 @@ def adicionar_codigo_barras(id_produto, codigo_barras):
     )
 
 
-def adicionar_codigo_barras_com_leitor(id_produto):
-    """Lê o código de barras direto do leitor, em vez de receber por parâmetro."""
-    codigo = codigo_lido()
-    if codigo is None:
-        print("Operação cancelada.")
-        return False
-    return adicionar_codigo_barras(id_produto, codigo)
-
-def adicionar_codigo_barras_interativo(id_produto, codigo_barras=None): #Essa função vai servir para caso o usuário queira cadastrar no meio do registro
+def input_codigo_barras_produto(id_produto, codigo_barras=None):
     """
-    Adiciona um código de barras ao produto.
-    Se codigo_barras for informado, utiliza esse código.
-    Caso contrário, solicita a leitura pelo leitor.
-    """
-    if codigo_barras is None:
-        print("Aponte o leitor para o código de barras do produto (ou digite 'sair' para cancelar):")
-        codigo_barras = codigo_lido()
+    Cadastra o código de barras do produto.
 
-        if codigo_barras is None:
+    Se `codigo_barras` for informado (ex: já lido durante uma compra),
+    tenta usar esse valor direto, sem pedir nova leitura. Se ele já
+    estiver em uso, cai pro fluxo de leitura manual abaixo.
+
+    Em qualquer caso de código duplicado, só pede um novo código de
+    barras — não reinicia o resto do cadastro (nome, categoria, etc).
+
+    Retorna False se o usuário cancelar a leitura (digitando 'sair').
+    """
+    if codigo_barras is not None:
+        try:
+            adicionar_codigo_barras(id_produto, codigo_barras)
+            return True
+        except ValueError as e:
+            print(f"Erro: {e}")
+
+    print("Aponte o leitor para o código de barras do produto (ou digite 'sair' para cancelar):")
+    while True:
+        codigo = codigo_lido()
+        if codigo is None:
             print("Operação cancelada.")
             return False
-
-    return adicionar_codigo_barras(id_produto, codigo_barras)
+        try:
+            adicionar_codigo_barras(id_produto, codigo)
+            return True
+        except ValueError as e:
+            print(f"Erro: {e}")
 
 
 def adicionar_medida_quantidade(id_produto, medida_quantidade):
@@ -183,23 +191,3 @@ def input_cadastro_nome_produto():
         if nome:
             return cadastrar_produto_base(nome)
         print("Nome do produto não pode ser vazio.")
-
-# ----------- fluxo de cadastro --------------
-def executar_cadastro(codigo_barras=None):
-    while True:
-            try:
-                id_produto = input_cadastro_nome_produto()
-                input_campo_produto("Digite a categoria do produto: ", adicionar_categoria, id_produto)
-                adicionar_codigo_barras_com_leitor(id_produto)
-                input_campo_produto("Digite a medida da quantidade: ", adicionar_medida_quantidade, id_produto)
-                input_campo_produto("Digite a unidade do produto: ", adicionar_unidade, id_produto)
-                input_campo_produto("Digite a capacidade minima de exposição: ", adicionar_capacidade_exposicao, id_produto, int)
-                input_campo_produto("Informe a quantidade minima para se ter em estoque: ", adicionar_estoque_minimo, id_produto, int)
-                break
-            except ValueError as e:
-                print(f"\nErro: {e}")
-
-                # Remove o cadastro incompleto
-                if "id_produto" in locals():
-                    excluir_produto_permanente(id_produto)
-                    del id_produto
