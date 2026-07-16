@@ -90,6 +90,26 @@ def buscar_unidade_por_id(id_produto):
 def buscar_valor_unitario_por_id(id_produto):
     return _buscar_campo_por_id(id_produto, "valor_unitario")
 
+def _buscar_campo_estoque_por_id(id_produto, coluna):
+    """Função interna: busca o valor de uma única coluna da tabela estoque pelo id_produto."""
+    conn = conectar_banco()
+    cursor = conn.execute(f"SELECT {coluna} FROM estoque WHERE id_produto = ?", (id_produto,))
+    resultado = cursor.fetchone()
+    conn.close()
+    return resultado[0] if resultado else None
+
+def buscar_estoque_deposito_por_id(id_produto):
+    return _buscar_campo_estoque_por_id(id_produto, "estoque_deposito")
+
+def buscar_estoque_exposicao_por_id(id_produto):
+    return _buscar_campo_estoque_por_id(id_produto, "estoque_exposicao")
+
+def buscar_capacidade_exposicao_por_id(id_produto):
+    return _buscar_campo_estoque_por_id(id_produto, "capacidade_exposicao")
+
+def buscar_estoque_minimo_por_id(id_produto):
+    return _buscar_campo_estoque_por_id(id_produto, "estoque_minimo")
+
 def listar_todos():
     conn = conectar_banco()
     cursor = conn.execute("""
