@@ -129,27 +129,3 @@ def editar_estoque_minimo(id_produto, novo_valor):
         return buscar_estoque_minimo_por_id(id_produto) # Se o valor for None, não faz nada e retorna o valor atual.
     validar_nao_negativo(novo_valor, "Estoque mínimo")
     return _atualizar_campo_estoque(id_produto, "estoque_minimo", novo_valor)
-
-
-# ----------- inputs --------------
-
-def input_campo_editar(prompt, func_editar, id_produto, tipo_dado=str):
-    """
-    Pede um valor pro usuário editar um campo. Deixar em branco (só Enter)
-    mantém o valor atual -- a própria função editar_* sabe fazer isso ao
-    receber None. Se o tipo não for válido, ou a validação (ex: negativo)
-    falhar, pede de novo só esse campo -- não reinicia a edição inteira.
-    """
-    while True:
-        valor = input(prompt).strip().upper()
-        if not valor:
-            return func_editar(id_produto, None)
-        try:
-            valor_convertido = tipo_dado(valor)
-        except (TypeError, ValueError):
-            print("Valor inválido para este campo. Tente novamente.")
-            continue
-        try:
-            return func_editar(id_produto, valor_convertido)
-        except ValueError as e:
-            print(f"Erro: {e}")

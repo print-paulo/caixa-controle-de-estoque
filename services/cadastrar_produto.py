@@ -165,29 +165,3 @@ def adicionar_capacidade_exposicao(id_produto, valor):
 def adicionar_estoque_minimo(id_produto, valor):
     validar_nao_negativo(valor, "Estoque mínimo")
     return _atualizar_campo_estoque(id_produto, "estoque_minimo", valor)
-
-# ----------- inputs --------------
-
-def input_campo_produto(prompt, func_adicionar, id_produto, tipo_dado=str):
-    while True:
-        valor = input(prompt).strip().upper()
-        if valor:
-            try:
-                valor_convertido = tipo_dado(valor)  # Valida o tipo de dado
-                print(valor_convertido)
-            except (TypeError, ValueError) as e:
-                print(f"Erro: {e}")
-                continue
-            try:
-                return func_adicionar(id_produto, valor_convertido)
-            except ValueError as e:
-                print(f"Erro: {e}")
-        else:
-            print("Valor não pode ser vazio.")
-
-def input_cadastro_nome_produto():
-    while True:
-        nome = input("Digite o nome do produto: ").strip().upper()
-        if nome:
-            return cadastrar_produto_base(nome)
-        print("Nome do produto não pode ser vazio.")

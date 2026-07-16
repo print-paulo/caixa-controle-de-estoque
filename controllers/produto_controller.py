@@ -10,8 +10,7 @@ from services.cadastrar_produto import (
     adicionar_unidade,
     adicionar_capacidade_exposicao,
     adicionar_estoque_minimo,
-    input_campo_produto,
-    input_cadastro_nome_produto,
+    cadastrar_produto_base,
 )
 from services.editar_produto import (
     editar_nome_produto,
@@ -22,7 +21,6 @@ from services.editar_produto import (
     editar_valor_unitario,
     editar_estoque_deposito,
     editar_estoque_exposicao,
-    input_campo_editar,
 )
 
 from services.excluir_produto import excluir_produto_permanente, excluir_produto, reativar_produto
@@ -34,6 +32,52 @@ from services.buscar_produto import (
 )
 from utils.leitor_barras import codigo_lido
 
+# ----------- inputs --------------
+
+def input_campo_produto(prompt, func_adicionar, id_produto, tipo_dado=str):
+    while True:
+        valor = input(prompt).strip().upper()
+        if valor:
+            try:
+                valor_convertido = tipo_dado(valor)  # Valida o tipo de dado
+                print(valor_convertido)
+            except (TypeError, ValueError) as e:
+                print(f"Erro: {e}")
+                continue
+            try:
+                return func_adicionar(id_produto, valor_convertido)
+            except ValueError as e:
+                print(f"Erro: {e}")
+        else:
+            print("Valor não pode ser vazio.")
+
+def input_cadastro_nome_produto():
+    while True:
+        nome = input("Digite o nome do produto: ").strip().upper()
+        if nome:
+            return cadastrar_produto_base(nome)
+        print("Nome do produto não pode ser vazio.")
+
+def input_campo_editar(prompt, func_editar, id_produto, tipo_dado=str):
+    """
+    Pede um valor pro usuário editar um campo. Deixar em branco (só Enter)
+    mantém o valor atual -- a própria função editar_* sabe fazer isso ao
+    receber None. Se o tipo não for válido, ou a validação (ex: negativo)
+    falhar, pede de novo só esse campo -- não reinicia a edição inteira.
+    """
+    while True:
+        valor = input(prompt).strip().upper()
+        if not valor:
+            return func_editar(id_produto, None)
+        try:
+            valor_convertido = tipo_dado(valor)
+        except (TypeError, ValueError):
+            print("Valor inválido para este campo. Tente novamente.")
+            continue
+        try:
+            return func_editar(id_produto, valor_convertido)
+        except ValueError as e:
+            print(f"Erro: {e}")
 
 # ----------- cadastro --------------
 
