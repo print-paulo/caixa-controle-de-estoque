@@ -3,15 +3,7 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
-from services.cadastrar_produto import (
-    adicionar_categoria,
-    input_codigo_barras_produto,
-    adicionar_medida_quantidade,
-    adicionar_unidade,
-    adicionar_capacidade_exposicao,
-    adicionar_estoque_minimo,
-    cadastrar_produto_base,
-)
+from services.cadastrar_produto import cadastrar_produto_completo
 from services.editar_produto import (
     editar_nome_produto,
     editar_categoria,
@@ -23,7 +15,7 @@ from services.editar_produto import (
     editar_estoque_exposicao,
 )
 
-from services.excluir_produto import excluir_produto_permanente, excluir_produto, reativar_produto
+from services.excluir_produto import excluir_produto, reativar_produto
 
 from services.buscar_produto import (
     buscar_por_codigo_barras,
@@ -34,29 +26,42 @@ from utils.leitor_barras import codigo_lido
 
 # ----------- inputs --------------
 
-def input_campo_produto(prompt, func_adicionar, id_produto, tipo_dado=str):
+def _pedir_texto(prompt, obrigatorio=True):
+    """Pede um texto ao usuário. Não toca no banco -- só coleta e valida formato."""
     while True:
         valor = input(prompt).strip().upper()
-        if valor:
-            try:
-                valor_convertido = tipo_dado(valor)  # Valida o tipo de dado
-                print(valor_convertido)
-            except (TypeError, ValueError) as e:
-                print(f"Erro: {e}")
-                continue
-            try:
-                return func_adicionar(id_produto, valor_convertido)
-            except ValueError as e:
-                print(f"Erro: {e}")
-        else:
-            print("Valor não pode ser vazio.")
+        if valor or not obrigatorio:
+            return valor or None
+        print("Valor não pode ser vazio.")
 
-def input_cadastro_nome_produto():
+
+def _pedir_inteiro_nao_negativo(prompt):
+    """Pede um inteiro >= 0 ao usuário. Não toca no banco."""
     while True:
-        nome = input("Digite o nome do produto: ").strip().upper()
-        if nome:
-            return cadastrar_produto_base(nome)
-        print("Nome do produto não pode ser vazio.")
+        valor = input(prompt).strip()
+        try:
+            valor_convertido = int(valor)
+        except ValueError:
+            print("Valor inválido, digite um número inteiro.")
+            continue
+        if valor_convertido < 0:
+            print("Valor não pode ser negativo.")
+            continue
+        return valor_convertido
+
+
+def _pedir_codigo_barras(codigo_barras=None):
+    """
+    Resolve o código de barras a usar no cadastro. Se `codigo_barras` já
+    foi informado (ex: lido durante uma compra), usa ele direto. Senão,
+    pede pro usuário passar no leitor. Retorna None se cancelado.
+    """
+    if codigo_barras is not None:
+        return codigo_barras
+
+    print("Aponte o leitor para o código de barras do produto (ou digite 'sair' para cancelar):")
+    return codigo_lido()
+
 
 def input_campo_editar(prompt, func_editar, id_produto, tipo_dado=str):
     """
@@ -84,35 +89,51 @@ def input_campo_editar(prompt, func_editar, id_produto, tipo_dado=str):
 def executar_cadastro(codigo_barras=None):
     """
     Fluxo completo de cadastro de um novo produto.
+
+    Todos os dados são coletados primeiro (nome, categoria, medida,
+    unidade, capacidade, mínimo) -- essa etapa é só input em memória,
+    nada é gravado no banco ainda. Só o código de barras e a gravação
+    final tocam no banco, e como `cadastrar_produto_completo` grava tudo
+    numa única transação, não existe mais "produto pela metade": se o
+    programa for interrompido a qualquer momento (Ctrl+C, terminal
+    fechado, queda de energia), ou o cadastro foi salvo por completo,
+    ou não foi salvo nada.
+
     Se `codigo_barras` for informado (ex: já lido durante uma compra),
     tenta usar esse valor antes de pedir a leitura manual.
     Retorna o id_produto criado, ou None se o cadastro for cancelado
     na etapa do código de barras.
     """
+    nome = _pedir_texto("Digite o nome do produto: ")
+    categoria = _pedir_texto("Digite a categoria do produto: ", obrigatorio=False)
+    medida = _pedir_texto("Digite a medida da quantidade: ", obrigatorio=False)
+    unidade = _pedir_texto("Digite a unidade do produto: ", obrigatorio=False)
+    capacidade = _pedir_inteiro_nao_negativo("Digite a capacidade minima de exposição: ")
+    minimo = _pedir_inteiro_nao_negativo("Informe a quantidade minima para se ter em estoque: ")
+
+    codigo = codigo_barras
     while True:
+        codigo = _pedir_codigo_barras(codigo)
+        if codigo is None:
+            print("Operação cancelada.")
+            return None
+
         try:
-            id_produto = input_cadastro_nome_produto()
-
-            input_campo_produto("Digite a categoria do produto: ", adicionar_categoria, id_produto)
-
-            if not input_codigo_barras_produto(id_produto, codigo_barras):
-                excluir_produto_permanente(id_produto)
-                return None
-
-            input_campo_produto("Digite a medida da quantidade: ", adicionar_medida_quantidade, id_produto)
-            input_campo_produto("Digite a unidade do produto: ", adicionar_unidade, id_produto)
-            input_campo_produto("Digite a capacidade minima de exposição: ", adicionar_capacidade_exposicao, id_produto, int)
-            input_campo_produto("Informe a quantidade minima para se ter em estoque: ", adicionar_estoque_minimo, id_produto, int)
-
+            id_produto = cadastrar_produto_completo(
+                nome_produto=nome,
+                nome_categoria=categoria,
+                codigo_barras=codigo,
+                medida_quantidade=medida,
+                unidade=unidade,
+                capacidade_exposicao=capacidade,
+                estoque_minimo=minimo,
+            )
             print(f"\nProduto cadastrado com sucesso (id {id_produto}).")
             return id_produto
 
         except ValueError as e:
             print(f"\nErro: {e}")
-            # Remove o cadastro incompleto
-            if "id_produto" in locals():
-                excluir_produto_permanente(id_produto)
-                del id_produto
+            codigo = None  # o único erro possível aqui é código duplicado; pede um novo
 
 
 
