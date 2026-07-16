@@ -80,6 +80,18 @@ def criar_tabelas(conn): # Cria as tabelas categoria, produto, estoque, venda, i
             FOREIGN KEY (id_produto) REFERENCES produto(id_produto)
         )
     """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS movimento_estoque (
+            id_movimento INTEGER PRIMARY KEY AUTOINCREMENT,
+            id_produto INTEGER NOT NULL,
+            tipo TEXT NOT NULL,
+            campo TEXT NOT NULL,
+            quantidade INTEGER NOT NULL,
+            origem_id INTEGER,
+            data_hora TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (id_produto) REFERENCES produto(id_produto)
+        )
+    """)
     conn.commit()
 
 if __name__ == "__main__":

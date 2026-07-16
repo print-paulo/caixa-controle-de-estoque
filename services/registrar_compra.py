@@ -4,6 +4,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 from utils.conectar_banco import conectar_banco
 from utils.validacoes import validar_positivo, validar_nao_negativo
+from services.estoque import registrar_movimento
 
 
 def iniciar_compra(fornecedor=None):
@@ -76,6 +77,8 @@ def adicionar_item_compra(id_compra, codigo_barras, quantidade, valor_custo_unit
             WHERE id_produto = ?
         """, (quantidade, id_produto))
 
+        registrar_movimento(conn, id_produto, "COMPRA", "estoque_deposito", quantidade, id_compra)
+
         conn.execute(
             "UPDATE produto SET valor_unitario = ? WHERE id_produto = ?",
             (valor_venda_calculado, id_produto),
@@ -147,6 +150,8 @@ def cancelar_compra(id_compra):
                 SET estoque_deposito = estoque_deposito - ?, ultima_atualizacao = CURRENT_TIMESTAMP
                 WHERE id_produto = ?
             """, (quantidade, id_produto))
+
+            registrar_movimento(conn, id_produto, "CANCELAMENTO_COMPRA", "estoque_deposito", -quantidade, id_compra)
 
         conn.execute("UPDATE compra SET status = 'CANCELADA' WHERE id_compra = ?", (id_compra,))
         conn.commit()

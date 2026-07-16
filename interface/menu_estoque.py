@@ -3,6 +3,7 @@ from controllers.estoque_controller import (
     executar_produtos_abaixo_minimo,
     executar_reposicao,
     executar_ajuste,
+    executar_historico,
 )
 
 def menu_estoque():
@@ -14,6 +15,7 @@ def menu_estoque():
         print("2 - Produtos abaixo do mínimo")
         print("3 - Repor exposição")
         print("4 - Ajustar estoque")
+        print("5 - Histórico")
         print("0 - Voltar")
 
         opcao = input("\nEscolha: ")
@@ -29,6 +31,9 @@ def menu_estoque():
 
         elif opcao == "4":
             executar_ajuste()
+
+        elif opcao == "5":
+            executar_historico()
 
         elif opcao == "0":
             break

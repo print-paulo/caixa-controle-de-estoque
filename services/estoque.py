@@ -14,6 +14,62 @@ def _produto_ativo_existe(conn, id_produto):
         raise ValueError(f"Produto com id {id_produto} não encontrado ou inativo.")
 
 
+# ---------- movimentação (log de tudo que altera o estoque) ----------
+
+def registrar_movimento(conn, id_produto, tipo, campo, quantidade, origem_id=None):
+    """
+    Registra uma linha no histórico de movimentação de estoque.
+
+    - conn: a conexão já aberta pelo chamador (participa da MESMA
+      transação da operação que originou o movimento -- esta função
+      não faz commit sozinha, quem chama é responsável por commitar).
+    - tipo: 'VENDA', 'CANCELAMENTO_VENDA', 'COMPRA', 'CANCELAMENTO_COMPRA',
+      'REPOSICAO' (automática, durante uma venda), 'REPOSICAO_MANUAL'
+      (via tela de estoque) ou 'AJUSTE' (correção manual).
+    - campo: 'estoque_deposito' ou 'estoque_exposicao'.
+    - quantidade: delta aplicado (positivo = entrada, negativo = saída).
+    - origem_id: id_venda ou id_compra relacionado, quando existir.
+    """
+    conn.execute("""
+        INSERT INTO movimento_estoque (id_produto, tipo, campo, quantidade, origem_id)
+        VALUES (?, ?, ?, ?, ?)
+    """, (id_produto, tipo, campo, quantidade, origem_id))
+
+
+def listar_movimentos(id_produto=None, tipo=None, limite=50):
+    """
+    Lista o histórico de movimentações, mais recente primeiro, já com o
+    nome do produto (via JOIN). Pode filtrar por produto e/ou tipo.
+    """
+    conn = conectar_banco()
+    try:
+        condicoes = []
+        parametros = []
+
+        if id_produto is not None:
+            condicoes.append("m.id_produto = ?")
+            parametros.append(id_produto)
+
+        if tipo:
+            condicoes.append("m.tipo = ?")
+            parametros.append(tipo)
+
+        where = f"WHERE {' AND '.join(condicoes)}" if condicoes else ""
+        parametros.append(limite)
+
+        return conn.execute(f"""
+            SELECT m.id_movimento, m.id_produto, p.nome_produto, m.tipo,
+                   m.campo, m.quantidade, m.origem_id, m.data_hora
+            FROM movimento_estoque m
+            JOIN produto p ON p.id_produto = m.id_produto
+            {where}
+            ORDER BY m.data_hora DESC, m.id_movimento DESC
+            LIMIT ?
+        """, parametros).fetchall()
+    finally:
+        conn.close()
+
+
 # ---------- consulta ----------
 
 def consultar_estoque_por_id(id_produto):
@@ -85,7 +141,8 @@ def repor_exposicao(id_produto, quantidade=None):
       valida que não ultrapassa nem o depósito disponível, nem o espaço
       livre na exposição (quando há capacidade definida).
 
-    Retorna a quantidade efetivamente movida.
+    Retorna a quantidade efetivamente movida. Registra dois movimentos
+    no histórico (saída do depósito, entrada na exposição).
     """
     conn = conectar_banco()
     try:
@@ -125,6 +182,9 @@ def repor_exposicao(id_produto, quantidade=None):
                 ultima_atualizacao = CURRENT_TIMESTAMP
             WHERE id_produto = ?
         """, (quantidade, quantidade, id_produto))
+
+        registrar_movimento(conn, id_produto, "REPOSICAO_MANUAL", "estoque_deposito", -quantidade)
+        registrar_movimento(conn, id_produto, "REPOSICAO_MANUAL", "estoque_exposicao", quantidade)
 
         conn.commit()
         return quantidade
@@ -166,6 +226,8 @@ def _ajustar_campo_estoque(id_produto, coluna, delta):
             SET {coluna} = ?, ultima_atualizacao = CURRENT_TIMESTAMP
             WHERE id_produto = ?
         """, (novo_valor, id_produto))
+
+        registrar_movimento(conn, id_produto, "AJUSTE", coluna, delta)
 
         conn.commit()
         return novo_valor

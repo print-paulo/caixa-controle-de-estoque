@@ -10,6 +10,7 @@ from services.estoque import (
     repor_exposicao,
     ajustar_estoque_deposito,
     ajustar_estoque_exposicao,
+    listar_movimentos,
 )
 from services.buscar_produto import buscar_por_codigo_barras
 from utils.leitor_barras import codigo_lido
@@ -152,3 +153,48 @@ def executar_ajuste():
 
     except ValueError as e:
         print(f"Erro: {e}")
+
+
+# ----------- histórico --------------
+
+_TIPOS_MOVIMENTO = {
+    "1": "VENDA",
+    "2": "CANCELAMENTO_VENDA",
+    "3": "COMPRA",
+    "4": "CANCELAMENTO_COMPRA",
+    "5": "REPOSICAO",
+    "6": "REPOSICAO_MANUAL",
+    "7": "AJUSTE",
+}
+
+
+def executar_historico():
+    print("\n1 - Histórico de um produto específico")
+    print("2 - Histórico geral (todos os produtos)")
+    opcao = input("Escolha: ")
+
+    id_produto = None
+    if opcao == "1":
+        id_produto = _obter_id_produto()
+        if id_produto is None:
+            return
+    elif opcao != "2":
+        print("Opção inválida.")
+        return
+
+    print("\nFiltrar por tipo de movimento? (Enter pra não filtrar)")
+    print("1-VENDA 2-CANCELAMENTO_VENDA 3-COMPRA 4-CANCELAMENTO_COMPRA 5-REPOSICAO 6-REPOSICAO_MANUAL 7-AJUSTE")
+    escolha_tipo = input("Escolha: ").strip()
+    tipo = _TIPOS_MOVIMENTO.get(escolha_tipo)
+
+    movimentos = listar_movimentos(id_produto=id_produto, tipo=tipo)
+
+    if not movimentos:
+        print("Nenhuma movimentação encontrada.")
+        return
+
+    print()
+    for id_mov, id_prod, nome, tipo_mov, campo, quantidade, origem_id, data_hora in movimentos:
+        sinal = "+" if quantidade >= 0 else ""
+        origem = f" (origem: {origem_id})" if origem_id is not None else ""
+        print(f"[{data_hora}] {nome} — {tipo_mov} em {campo}: {sinal}{quantidade}{origem}")
