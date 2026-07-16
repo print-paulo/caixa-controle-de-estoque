@@ -37,6 +37,16 @@ def excluir_produto_permanente(id_produto):
 
     try:
         conn.execute("""
+            DELETE FROM item_venda
+            WHERE id_produto = ?
+        """, (id_produto,))
+
+        conn.execute("""
+            DELETE FROM item_compra
+            WHERE id_produto = ?
+        """, (id_produto,))
+
+        conn.execute("""
             DELETE FROM estoque
             WHERE id_produto = ?
         """, (id_produto,))
