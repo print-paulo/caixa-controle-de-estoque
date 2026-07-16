@@ -153,33 +153,3 @@ def input_campo_editar(prompt, func_editar, id_produto, tipo_dado=str):
             return func_editar(id_produto, valor_convertido)
         except ValueError as e:
             print(f"Erro: {e}")
-
-
-# ----------- fluxo de edição --------------
-
-def executar_edicao():
-    try:
-        id_produto = int(input("Id do produto a editar: "))
-    except ValueError:
-        print("Id inválido.")
-        return None
-
-    nome_atual = buscar_nome_por_id(id_produto)
-    if nome_atual is None:
-        print(f"Produto com id {id_produto} não encontrado.")
-        return None
-
-    print(f"Produto atual: {nome_atual}")
-    print("(Deixe em branco e aperte Enter pra manter o valor atual em qualquer campo)\n")
-
-    input_campo_editar("Novo nome do produto: ", editar_nome_produto, id_produto)
-    input_campo_editar("Nova categoria: ", editar_categoria, id_produto)
-    input_campo_editar("Novo código de barras: ", editar_codigo_barras, id_produto)
-    input_campo_editar("Nova medida/quantidade (ex: 750ML, 1L): ", editar_medida_quantidade, id_produto)
-    input_campo_editar("Nova unidade: ", editar_unidade, id_produto)
-    input_campo_editar("Novo valor unitário: ", editar_valor_unitario, id_produto, float)
-    input_campo_editar("Novo estoque de depósito: ", editar_estoque_deposito, id_produto, int)
-    input_campo_editar("Novo estoque de exposição: ", editar_estoque_exposicao, id_produto, int)
-
-    print(f"\nProduto (id {id_produto}) atualizado com sucesso.")
-    return id_produto

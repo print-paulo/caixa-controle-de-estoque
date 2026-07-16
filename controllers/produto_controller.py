@@ -22,13 +22,15 @@ from services.editar_produto import (
     editar_valor_unitario,
     editar_estoque_deposito,
     editar_estoque_exposicao,
+    input_campo_editar,
 )
+
 from services.excluir_produto import excluir_produto_permanente, excluir_produto, reativar_produto
+
 from services.buscar_produto import (
     buscar_por_codigo_barras,
     buscar_por_nome,
-    buscar_por_id,
-    listar_todos,
+    listar_todos, buscar_nome_por_id,
 )
 from utils.leitor_barras import codigo_lido
 
@@ -69,55 +71,36 @@ def executar_cadastro(codigo_barras=None):
                 del id_produto
 
 
+
+
 # ----------- edição --------------
 
 def executar_edicao():
-    """
-    Fluxo de edição de um produto existente. Deixar o campo em branco
-    mantém o valor atual (comportamento já garantido pelos services de
-    edição, exceto para estoque_deposito/estoque_exposicao — ver aviso).
-    """
     try:
         id_produto = int(input("Id do produto a editar: "))
     except ValueError:
         print("Id inválido.")
-        return
+        return None
 
-    produto = buscar_por_id(id_produto)
-    if produto is None:
-        print("Produto não encontrado.")
-        return
+    nome_atual = buscar_nome_por_id(id_produto)
+    if nome_atual is None:
+        print(f"Produto com id {id_produto} não encontrado.")
+        return None
 
-    print(f"Produto atual: {produto}")
+    print(f"Produto atual: {nome_atual}")
+    print("(Deixe em branco e aperte Enter pra manter o valor atual em qualquer campo)\n")
 
-    try:
-        editar_nome_produto(id_produto, input("Novo nome (Enter para manter): ").strip().upper())
-        editar_categoria(id_produto, input("Nova categoria (Enter para manter): ").strip().upper())
-        editar_codigo_barras(id_produto, input("Novo código de barras (Enter para manter): ").strip())
-        editar_medida_quantidade(id_produto, input("Nova medida, ex: 750ML (Enter para manter): ").strip().upper())
-        editar_unidade(id_produto, input("Nova unidade (Enter para manter): ").strip().upper())
+    input_campo_editar("Novo nome do produto: ", editar_nome_produto, id_produto)
+    input_campo_editar("Nova categoria: ", editar_categoria, id_produto)
+    input_campo_editar("Novo código de barras: ", editar_codigo_barras, id_produto)
+    input_campo_editar("Nova medida/quantidade (ex: 750ML, 1L): ", editar_medida_quantidade, id_produto)
+    input_campo_editar("Nova unidade: ", editar_unidade, id_produto)
+    input_campo_editar("Novo valor unitário: ", editar_valor_unitario, id_produto, float)
+    input_campo_editar("Novo estoque de depósito: ", editar_estoque_deposito, id_produto, int)
+    input_campo_editar("Novo estoque de exposição: ", editar_estoque_exposicao, id_produto, int)
 
-        novo_valor_unitario = input("Novo valor unitário (Enter para manter): ").strip()
-        novo_valor_unitario = None if novo_valor_unitario == "" else float(novo_valor_unitario)
-        editar_valor_unitario(id_produto, novo_valor_unitario)
-
-        # ATENÇÃO: diferente dos campos acima, estas duas funções não têm
-        # tratamento de "branco = manter valor atual" — um Enter aqui
-        # gravaria 0/None de verdade. Por isso aqui só chamamos se algo
-        # for digitado.
-        novo_estoque_deposito = input("Novo estoque de depósito (Enter para pular esta edição): ").strip()
-        if novo_estoque_deposito != "":
-            editar_estoque_deposito(id_produto, int(novo_estoque_deposito))
-
-        novo_estoque_exposicao = input("Novo estoque de exposição (Enter para pular esta edição): ").strip()
-        if novo_estoque_exposicao != "":
-            editar_estoque_exposicao(id_produto, int(novo_estoque_exposicao))
-
-        print("\nProduto atualizado com sucesso.")
-
-    except ValueError as e:
-        print(f"\nErro: {e}")
-
+    print(f"\nProduto (id {id_produto}) atualizado com sucesso.")
+    return id_produto
 
 # ----------- exclusão --------------
 
