@@ -1,3 +1,7 @@
+import sys
+from pathlib import Path
+
+sys.path.append(str(Path(__file__).resolve().parent.parent))
 from controllers.relatorios_controller import (
     executar_relatorio_produtos,
     executar_relatorio_estoque,

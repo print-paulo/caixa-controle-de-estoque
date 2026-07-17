@@ -1,4 +1,14 @@
-from controllers.produto_controller import executar_cadastro, executar_busca, executar_edicao,executar_exclusao, executar_reativacao
+import sys
+from pathlib import Path
+
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+from controllers.produto_controller import (
+    executar_cadastro, 
+    executar_busca, 
+    executar_edicao,
+    executar_exclusao, 
+    executar_reativacao
+)
 
 def menu_produtos():
     while True:

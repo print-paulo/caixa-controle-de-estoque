@@ -1,3 +1,7 @@
+import sys
+from pathlib import Path
+
+sys.path.append(str(Path(__file__).resolve().parent.parent))
 from interface.menu_produtos import menu_produtos
 from interface.menu_vendas import menu_vendas
 from interface.menu_compras import menu_compras
