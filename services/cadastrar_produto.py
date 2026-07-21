@@ -30,7 +30,7 @@ def cadastrar_produto_completo(
     nome_produto,
     nome_categoria=None,
     codigo_barras=None,
-    medida_quantidade=None,
+    quantidade=None,
     unidade=None,
     capacidade_exposicao=None,
     estoque_minimo=None,
@@ -71,9 +71,9 @@ def cadastrar_produto_completo(
         id_categoria = obter_ou_criar_categoria(conn, nome_categoria)
 
         cursor = conn.execute("""
-            INSERT INTO produto (id_categoria, codigo_barras, nome_produto, medida_quantidade, unidade)
+            INSERT INTO produto (id_categoria, codigo_barras, nome_produto, quantidade, unidade)
             VALUES (?, ?, ?, ?, ?)
-        """, (id_categoria, codigo_barras, nome_produto.strip(), medida_quantidade, unidade))
+        """, (id_categoria, codigo_barras, nome_produto.strip(), quantidade, unidade))
         id_produto = cursor.lastrowid
 
         conn.execute("""

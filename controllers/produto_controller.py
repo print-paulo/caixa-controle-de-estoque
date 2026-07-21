@@ -8,7 +8,7 @@ from services.editar_produto import (
     editar_nome_produto,
     editar_categoria,
     editar_codigo_barras,
-    editar_medida_quantidade,
+    editar_quantidade,
     editar_unidade,
     editar_valor_unitario,
     editar_estoque_deposito,
@@ -123,7 +123,7 @@ def executar_cadastro(codigo_barras=None):
                 nome_produto=nome,
                 nome_categoria=categoria,
                 codigo_barras=codigo,
-                medida_quantidade=medida,
+                quantidade=medida,
                 unidade=unidade,
                 capacidade_exposicao=capacidade,
                 estoque_minimo=minimo,
@@ -158,7 +158,7 @@ def executar_edicao():
     input_campo_editar("Novo nome do produto: ", editar_nome_produto, id_produto)
     input_campo_editar("Nova categoria: ", editar_categoria, id_produto)
     input_campo_editar("Novo código de barras: ", editar_codigo_barras, id_produto)
-    input_campo_editar("Nova medida/quantidade (ex: 750ML, 1L): ", editar_medida_quantidade, id_produto)
+    input_campo_editar("Nova quantidade (ex: 750ML, 1L): ", editar_quantidade, id_produto)
     input_campo_editar("Nova unidade: ", editar_unidade, id_produto)
     input_campo_editar("Novo valor unitário: ", editar_valor_unitario, id_produto, float)
     input_campo_editar("Novo estoque de depósito: ", editar_estoque_deposito, id_produto, int)
