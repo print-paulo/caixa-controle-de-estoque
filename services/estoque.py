@@ -14,6 +14,21 @@ def _produto_ativo_existe(conn, id_produto):
         raise ValueError(f"Produto com id {id_produto} não encontrado ou inativo.")
 
 
+def _produto_existe_qualquer_status(conn, id_produto):
+    """
+    Como `_produto_ativo_existe`, mas sem exigir `ativo = 1`. Usada pelo
+    cancelamento de venda/compra: a venda/compra aconteceu quando o
+    produto ainda existia (a FK garante isso), e cancelar precisa
+    devolver o estoque corretamente mesmo que o produto tenha sido
+    desativado depois -- não faz sentido bloquear essa reconciliação.
+    """
+    existe = conn.execute(
+        "SELECT 1 FROM produto WHERE id_produto = ?", (id_produto,)
+    ).fetchone()
+    if existe is None:
+        raise ValueError(f"Produto com id {id_produto} não encontrado.")
+
+
 # ---------- movimentação (log de tudo que altera o estoque) ----------
 
 def registrar_movimento(conn, id_produto, tipo, campo, quantidade, origem_id=None):
@@ -198,17 +213,35 @@ def repor_exposicao(id_produto, quantidade=None):
 
 # ---------- ajuste manual ----------
 
-def _ajustar_campo_estoque(id_produto, coluna, delta):
+def _ajustar_campo_estoque(id_produto, coluna, delta, conn=None, tipo="AJUSTE", origem_id=None, exigir_produto_ativo=True):
     """
     Função interna: soma `delta` (pode ser negativo) ao valor atual de
     uma coluna numérica da tabela estoque, sem deixar o resultado ficar
-    negativo. Usada para correções manuais (perda, quebra, contagem
-    física divergente etc.), diferente de `editar_estoque_*` que
+    negativo. Usada tanto pro ajuste manual (perda, quebra, contagem
+    física divergente etc.) quanto, via `conn` externo, pelo
+    cancelamento de venda/compra -- diferente de `editar_estoque_*` que
     sobrescreve o valor absoluto durante a edição do cadastro.
+
+    - conn: se None (uso normal, standalone), abre e fecha sua própria
+      conexão, com commit/rollback próprios. Se for passada uma conexão
+      já aberta (ex: pelo cancelamento de venda/compra), participa da
+      transação do chamador -- não commita nem fecha, quem chamou é
+      responsável por isso.
+    - tipo: tipo do movimento a registrar no histórico (default 'AJUSTE').
+    - origem_id: id_venda/id_compra relacionado, quando existir.
+    - exigir_produto_ativo: se False, permite ajustar o estoque mesmo de
+      um produto desativado (necessário pro cancelamento, que precisa
+      reconciliar o estoque independente do status atual do produto).
     """
-    conn = conectar_banco()
+    gerenciar_transacao = conn is None
+    if gerenciar_transacao:
+        conn = conectar_banco()
+
     try:
-        _produto_ativo_existe(conn, id_produto)
+        if exigir_produto_ativo:
+            _produto_ativo_existe(conn, id_produto)
+        else:
+            _produto_existe_qualquer_status(conn, id_produto)
 
         atual = conn.execute(
             f"SELECT {coluna} FROM estoque WHERE id_produto = ?", (id_produto,)
@@ -227,23 +260,32 @@ def _ajustar_campo_estoque(id_produto, coluna, delta):
             WHERE id_produto = ?
         """, (novo_valor, id_produto))
 
-        registrar_movimento(conn, id_produto, "AJUSTE", coluna, delta)
+        registrar_movimento(conn, id_produto, tipo, coluna, delta, origem_id)
 
-        conn.commit()
+        if gerenciar_transacao:
+            conn.commit()
         return novo_valor
 
     except Exception:
-        conn.rollback()
+        if gerenciar_transacao:
+            conn.rollback()
         raise
     finally:
-        conn.close()
+        if gerenciar_transacao:
+            conn.close()
 
 
-def ajustar_estoque_deposito(id_produto, delta):
+def ajustar_estoque_deposito(id_produto, delta, conn=None, tipo="AJUSTE", origem_id=None, exigir_produto_ativo=True):
     """Soma `delta` (positivo ou negativo) ao estoque de depósito. Retorna o novo valor."""
-    return _ajustar_campo_estoque(id_produto, "estoque_deposito", delta)
+    return _ajustar_campo_estoque(
+        id_produto, "estoque_deposito", delta,
+        conn=conn, tipo=tipo, origem_id=origem_id, exigir_produto_ativo=exigir_produto_ativo,
+    )
 
 
-def ajustar_estoque_exposicao(id_produto, delta):
+def ajustar_estoque_exposicao(id_produto, delta, conn=None, tipo="AJUSTE", origem_id=None, exigir_produto_ativo=True):
     """Soma `delta` (positivo ou negativo) ao estoque de exposição. Retorna o novo valor."""
-    return _ajustar_campo_estoque(id_produto, "estoque_exposicao", delta)
+    return _ajustar_campo_estoque(
+        id_produto, "estoque_exposicao", delta,
+        conn=conn, tipo=tipo, origem_id=origem_id, exigir_produto_ativo=exigir_produto_ativo,
+    )

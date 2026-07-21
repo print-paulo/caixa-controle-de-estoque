@@ -4,7 +4,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 from utils.conectar_banco import conectar_banco
 from utils.validacoes import validar_positivo
-from services.estoque import registrar_movimento
+from services.estoque import registrar_movimento, ajustar_estoque_exposicao
 
 
 def iniciar_venda():
@@ -249,18 +249,18 @@ def cancelar_venda(id_venda):
     """Cancela a venda em aberto e devolve os itens já lidos ao estoque de exposição."""
     conn = conectar_banco()
     try:
+        _validar_venda_aberta(conn, id_venda)
+
         itens = conn.execute(
             "SELECT id_produto, quantidade FROM item_venda WHERE id_venda = ?", (id_venda,)
         ).fetchall()
 
         for id_produto, quantidade in itens:
-            conn.execute("""
-                UPDATE estoque
-                SET estoque_exposicao = estoque_exposicao + ?, ultima_atualizacao = CURRENT_TIMESTAMP
-                WHERE id_produto = ?
-            """, (quantidade, id_produto))
-
-            registrar_movimento(conn, id_produto, "CANCELAMENTO_VENDA", "estoque_exposicao", quantidade, id_venda)
+            ajustar_estoque_exposicao(
+                id_produto, quantidade,
+                conn=conn, tipo="CANCELAMENTO_VENDA", origem_id=id_venda,
+                exigir_produto_ativo=False,
+            )
 
         conn.execute("UPDATE venda SET status = 'CANCELADA' WHERE id_venda = ?", (id_venda,))
         conn.commit()
