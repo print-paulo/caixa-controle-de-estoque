@@ -32,16 +32,27 @@ def atualizar_campo_estoque(id_produto, coluna, valor, contexto="atualizar", exi
 
     - contexto: usado na mensagem de erro (ex: "Erro ao {contexto} {coluna}").
     - exigir_existente: se True, valida que já existe uma linha de estoque
-      para o produto antes de atualizar (usada na edição, não no cadastro).
+      para o produto E que o produto está ativo (usada na edição, não no
+      cadastro -- produto desativado é tratado como "excluído", então seu
+      estoque não deve poder ser editado).
     """
     conn = conectar_banco()
     try:
         if exigir_existente:
-            existe = conn.execute(
-                "SELECT 1 FROM estoque WHERE id_produto = ?", (id_produto,)
-            ).fetchone()
-            if existe is None:
+            resultado = conn.execute("""
+                SELECT p.ativo
+                FROM estoque e
+                JOIN produto p ON p.id_produto = e.id_produto
+                WHERE e.id_produto = ?
+            """, (id_produto,)).fetchone()
+
+            if resultado is None:
                 raise ValueError(f"Não existe linha de estoque para o produto {id_produto}.")
+
+            if resultado[0] != 1:
+                raise ValueError(
+                    f"Produto com id {id_produto} está desativado; não é possível editar seu estoque."
+                )
 
         conn.execute(
             f"UPDATE estoque SET {coluna} = ?, ultima_atualizacao = CURRENT_TIMESTAMP WHERE id_produto = ?",
