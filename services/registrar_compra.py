@@ -40,58 +40,114 @@ def adicionar_item_compra(id_compra, codigo_barras, quantidade, valor_custo_unit
     validar_nao_negativo(margem_lucro, "Margem de lucro", permitir_none=False)
 
     conn = conectar_banco()
+
     try:
-        compra = conn.execute(
-            "SELECT status FROM compra WHERE id_compra = ?", (id_compra,)
-        ).fetchone()
-        if compra is None:
-            raise ValueError(f"Compra {id_compra} não encontrada.")
-        if compra[0] != "ABERTA":
-            raise ValueError(f"Compra {id_compra} não está aberta (status atual: '{compra[0]}').")
+        _validar_compra_aberta(conn, id_compra)
 
-        produto = conn.execute("""
-            SELECT id_produto, nome_produto
-            FROM produto
-            WHERE codigo_barras = ? AND ativo = 1
-        """, (codigo_barras,)).fetchone()
+        id_produto, nome_produto = _buscar_produto(conn, codigo_barras)
 
-        if produto is None:
-            raise ValueError(f"Produto com código de barras '{codigo_barras}' não encontrado.")
-
-        id_produto, nome_produto = produto
-
-        valor_venda_calculado = valor_custo_unitario * (1 + margem_lucro)
-        sub_total = quantidade * valor_custo_unitario
-
-        conn.execute("""
-            INSERT INTO item_compra (
-                id_compra, id_produto, quantidade,
-                valor_custo_unitario, margem_lucro, valor_venda_calculado, sub_total
-            )
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        """, (id_compra, id_produto, quantidade, valor_custo_unitario, margem_lucro, valor_venda_calculado, sub_total))
-
-        conn.execute("""
-            UPDATE estoque
-            SET estoque_deposito = estoque_deposito + ?, ultima_atualizacao = CURRENT_TIMESTAMP
-            WHERE id_produto = ?
-        """, (quantidade, id_produto))
-
-        registrar_movimento(conn, id_produto, "COMPRA", "estoque_deposito", quantidade, id_compra)
-
-        conn.execute(
-            "UPDATE produto SET valor_unitario = ? WHERE id_produto = ?",
-            (valor_venda_calculado, id_produto),
+        valor_venda_calculado, sub_total = _calcular_valores(
+            valor_custo_unitario, margem_lucro, quantidade
         )
 
+        _registrar_item_compra(
+            conn, id_compra, id_produto, quantidade,
+            valor_custo_unitario, margem_lucro, valor_venda_calculado, sub_total
+        )
+
+        _acrescentar_estoque(conn, id_produto, quantidade, id_compra)
+
+        _atualizar_valor_venda(conn, id_produto, valor_venda_calculado)
+
         conn.commit()
+
         return sub_total, valor_venda_calculado
 
     except Exception:
         conn.rollback()
         raise
+
     finally:
         conn.close()
+
+
+def _validar_compra_aberta(conn, id_compra):
+
+    compra = conn.execute(
+        "SELECT status FROM compra WHERE id_compra = ?",
+        (id_compra,)
+    ).fetchone()
+
+    if compra is None:
+        raise ValueError(
+            f"Compra {id_compra} não encontrada."
+        )
+
+    if compra[0] != "ABERTA":
+        raise ValueError(
+            f"Compra {id_compra} não está aberta (status atual: '{compra[0]}')."
+        )
+
+
+def _buscar_produto(conn, codigo_barras):
+    produto = conn.execute("""
+        SELECT id_produto,
+               nome_produto
+        FROM produto
+        WHERE codigo_barras = ?
+          AND ativo = 1
+    """, (codigo_barras,)).fetchone()
+
+    if produto is None:
+        raise ValueError(f"Produto com código de barras '{codigo_barras}' não encontrado.")
+
+    return produto
+
+
+def _calcular_valores(valor_custo_unitario, margem_lucro, quantidade):
+
+    valor_venda_calculado = valor_custo_unitario * (1 + margem_lucro)
+    sub_total = quantidade * valor_custo_unitario
+
+    return valor_venda_calculado, sub_total
+
+
+def _registrar_item_compra(conn, id_compra, id_produto, quantidade,
+                            valor_custo_unitario, margem_lucro, valor_venda_calculado, sub_total):
+
+    conn.execute("""
+        INSERT INTO item_compra (
+            id_compra,
+            id_produto,
+            quantidade,
+            valor_custo_unitario,
+            margem_lucro,
+            valor_venda_calculado,
+            sub_total
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    """, (id_compra, id_produto, quantidade, valor_custo_unitario, margem_lucro, valor_venda_calculado, sub_total))
+
+
+def _acrescentar_estoque(conn, id_produto, quantidade, id_compra):
+
+    conn.execute("""
+        UPDATE estoque
+        SET
+            estoque_deposito = estoque_deposito + ?,
+            ultima_atualizacao = CURRENT_TIMESTAMP
+        WHERE id_produto = ?
+    """, (quantidade, id_produto))
+
+    registrar_movimento(conn, id_produto, "COMPRA", "estoque_deposito", quantidade, id_compra)
+
+
+def _atualizar_valor_venda(conn, id_produto, valor_venda_calculado):
+
+    conn.execute(
+        "UPDATE produto SET valor_unitario = ? WHERE id_produto = ?",
+        (valor_venda_calculado, id_produto),
+    )
 
 
 def calcular_total_compra(id_compra):
