@@ -1,3 +1,15 @@
+import sys
+from pathlib import Path
+
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+from controllers.estoque_controller import (
+    executar_consulta,
+    executar_produtos_abaixo_minimo,
+    executar_reposicao,
+    executar_ajuste,
+    executar_historico,
+)
+
 def menu_estoque():
 
     while True:
@@ -10,22 +22,25 @@ def menu_estoque():
         print("5 - Histórico")
         print("0 - Voltar")
 
-        opcao = input()
+        opcao = input("\nEscolha: ")
 
         if opcao == "1":
-            pass
+            executar_consulta()
 
         elif opcao == "2":
-            pass
+            executar_produtos_abaixo_minimo()
 
         elif opcao == "3":
-            pass
+            executar_reposicao()
 
         elif opcao == "4":
-            pass
+            executar_ajuste()
 
         elif opcao == "5":
-            pass
+            executar_historico()
 
         elif opcao == "0":
             break
+
+        else:
+            print("Opção inválida.")

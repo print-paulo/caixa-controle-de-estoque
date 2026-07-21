@@ -4,6 +4,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 from utils.conectar_banco import conectar_banco
 from utils.validacoes import validar_positivo
+from services.estoque import registrar_movimento
 
 
 def iniciar_venda():
@@ -35,7 +36,7 @@ def adicionar_item_venda(id_venda, codigo_barras, quantidade):
 
         id_produto, nome_produto, valor_unitario = _buscar_produto(conn,codigo_barras)
 
-        quantidade_reposta = _repor_estoque_exposicao(conn, id_produto)
+        quantidade_reposta = _repor_estoque_exposicao(conn, id_produto, id_venda)
 
         if quantidade_reposta:
             print(
@@ -49,7 +50,7 @@ def adicionar_item_venda(id_venda, codigo_barras, quantidade):
 
         _registrar_item_venda(conn,id_venda,id_produto,quantidade,valor_unitario,sub_total)
 
-        _descontar_estoque(conn,id_produto,quantidade)
+        _descontar_estoque(conn,id_produto,quantidade,id_venda)
 
         estoque_baixo = _verificar_estoque_minimo(conn, id_produto)
 
@@ -85,7 +86,7 @@ def _validar_venda_aberta(conn, id_venda):
             f"Venda {id_venda} não está aberta (status atual: {venda[0]})."
         )
 
-def _repor_estoque_exposicao(conn, id_produto):
+def _repor_estoque_exposicao(conn, id_produto, id_venda):
     deposito, exposicao, capacidade = _buscar_estoque(conn, id_produto)
 
     if capacidade is None or capacidade <= 0:
@@ -109,6 +110,9 @@ def _repor_estoque_exposicao(conn, id_produto):
             ultima_atualizacao = CURRENT_TIMESTAMP
         WHERE id_produto = ?
     """,(quantidade_reposta,quantidade_reposta,id_produto))
+
+    registrar_movimento(conn, id_produto, "REPOSICAO", "estoque_deposito", -quantidade_reposta, id_venda)
+    registrar_movimento(conn, id_produto, "REPOSICAO", "estoque_exposicao", quantidade_reposta, id_venda)
 
     return quantidade_reposta
 
@@ -190,7 +194,7 @@ def _registrar_item_venda(conn, id_venda, id_produto, quantidade, valor_unitario
         VALUES (?, ?, ?, ?, ?)
     """, (id_venda, id_produto, quantidade, valor_unitario, sub_total))
 
-def _descontar_estoque(conn,id_produto,quantidade):
+def _descontar_estoque(conn,id_produto,quantidade,id_venda):
 
     conn.execute("""
         UPDATE estoque
@@ -199,6 +203,8 @@ def _descontar_estoque(conn,id_produto,quantidade):
             ultima_atualizacao = CURRENT_TIMESTAMP
         WHERE id_produto = ?
     """,(quantidade,id_produto))
+
+    registrar_movimento(conn, id_produto, "VENDA", "estoque_exposicao", -quantidade, id_venda)
 
 def calcular_total_venda(id_venda):
     """Soma os sub_total de todos os itens da venda. Retorna 0.0 se não houver itens."""
@@ -253,6 +259,8 @@ def cancelar_venda(id_venda):
                 SET estoque_exposicao = estoque_exposicao + ?, ultima_atualizacao = CURRENT_TIMESTAMP
                 WHERE id_produto = ?
             """, (quantidade, id_produto))
+
+            registrar_movimento(conn, id_produto, "CANCELAMENTO_VENDA", "estoque_exposicao", quantidade, id_venda)
 
         conn.execute("UPDATE venda SET status = 'CANCELADA' WHERE id_venda = ?", (id_venda,))
         conn.commit()

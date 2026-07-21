@@ -1,37 +1,37 @@
-from tests.cadastro_teste import executar_cadastro
-#from tests.buscar_teste import executar_busca
-#from tests.editar_teste import executar_edicao
-#from tests.excluir_teste import executar_exclusao
+import sys
+from pathlib import Path
 
-#   depois é pra criar as funções de teste e dps mudar elas de pasta pra uma função real
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+from controllers.produto_controller import (
+    executar_cadastro, 
+    executar_busca, 
+    executar_edicao,
+    executar_exclusao, 
+    executar_reativacao
+)
+
 def menu_produtos():
-
     while True:
-
         print("\n====== PRODUTOS ======")
         print("1 - Cadastrar produto")
         print("2 - Buscar produto")
         print("3 - Editar produto")
-        print("4 - Excluir produto")
+        print("4 - Excluir/Desativar produto")
+        print("5 - Reativar produto")
         print("0 - Voltar")
-
         opcao = input("\nEscolha: ")
 
         if opcao == "1":
             executar_cadastro()
-
         elif opcao == "2":
-            #executar_busca()
-            pass
-
+            executar_busca()
         elif opcao == "3":
-            #executar_edicao()
-            pass
+            executar_edicao()
         elif opcao == "4":
-            #executar_exclusao()
-            pass
+            executar_exclusao()
+        elif opcao == "5":
+            executar_reativacao()
         elif opcao == "0":
-            break
-
+           break
         else:
             print("Opção inválida.")
