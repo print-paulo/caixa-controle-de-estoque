@@ -48,7 +48,7 @@ def importar_arquivo(cursor, caminho_arquivo): # Importa um único arquivo .xlsx
         # codigo_barras fica sempre nulo aqui - será preenchido manualmente depois via UPDATE
         codigo = None
         nome_produto = str(row["Produto"]).strip()
-        medida_quantidade = str(row.get("Quantidade")).strip().upper() if pd.notna(row.get("Quantidade")) else None
+        quantidade = str(row.get("Quantidade")).strip().upper() if pd.notna(row.get("Quantidade")) else None
         unidade = str(row["Unidade"]).strip() if pd.notna(row.get("Unidade")) else None
         minimo = int(row["Estoque Mínimo"]) if pd.notna(row.get("Estoque Mínimo")) else 0
         # A planilha só tem "Estoque Atual" (um valor só), sem distinguir depósito/exposição.
@@ -62,9 +62,9 @@ def importar_arquivo(cursor, caminho_arquivo): # Importa um único arquivo .xlsx
         # Sem coluna "Categoria" nesta planilha -> fica sem categoria (id_categoria = NULL)
         cursor.execute("""
             INSERT INTO produto
-            (codigo_barras, nome_produto, medida_quantidade, unidade, valor_unitario)
+            (codigo_barras, nome_produto, quantidade, unidade, valor_unitario)
             VALUES (?, ?, ?, ?, ?)
-        """, (codigo, nome_produto, medida_quantidade, unidade, valor_unitario))
+        """, (codigo, nome_produto, quantidade, unidade, valor_unitario))
         id_produto = cursor.lastrowid
 
         cursor.execute("""

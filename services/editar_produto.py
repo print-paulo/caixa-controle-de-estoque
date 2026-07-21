@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
-from services.buscar_produto import buscar_por_id, buscar_nome_por_id, buscar_codigo_barras_por_id, buscar_categoria_por_id, buscar_medida_quantidade_por_id, buscar_unidade_por_id, buscar_valor_unitario_por_id
+from services.buscar_produto import buscar_por_id, buscar_nome_por_id, buscar_codigo_barras_por_id, buscar_categoria_por_id, buscar_quantidade_por_id, buscar_unidade_por_id, buscar_valor_unitario_por_id
 from utils.leitor_barras import codigo_lido
 from utils.conectar_banco import conectar_banco
 from utils.validacoes import validar_nao_negativo
@@ -83,10 +83,10 @@ def editar_codigo_barras_com_leitor(id_produto):
     return editar_codigo_barras(id_produto, codigo)
 
 
-def editar_medida_quantidade(id_produto, nova_medida):
-    if not nova_medida or not nova_medida.strip():
-        return buscar_medida_quantidade_por_id(id_produto) # Se a medida for uma string vazia, não faz nada e retorna a medida atual.
-    return _atualizar_campo_produto(id_produto, "medida_quantidade", nova_medida)
+def editar_quantidade(id_produto, nova_quantidade):
+    if not nova_quantidade or not nova_quantidade.strip():
+        return buscar_quantidade_por_id(id_produto) # Se a quantidade for uma string vazia, não faz nada e retorna a quantidade atual.
+    return _atualizar_campo_produto(id_produto, "quantidade", nova_quantidade)
 
 
 def editar_unidade(id_produto, nova_unidade):

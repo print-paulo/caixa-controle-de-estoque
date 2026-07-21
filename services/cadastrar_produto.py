@@ -132,8 +132,8 @@ def input_codigo_barras_produto(id_produto, codigo_barras=None):
             print(f"Erro: {e}")
 
 
-def adicionar_medida_quantidade(id_produto, medida_quantidade):
-    return _atualizar_campo_produto(id_produto, "medida_quantidade", medida_quantidade)
+def adicionar_quantidade(id_produto, quantidade):
+    return _atualizar_campo_produto(id_produto, "quantidade", quantidade)
 
 
 def adicionar_unidade(id_produto, unidade):

@@ -2,7 +2,7 @@ import sys
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
-from services.editar_produto import editar_nome_produto, editar_categoria, editar_codigo_barras, editar_medida_quantidade, editar_unidade, editar_valor_unitario, editar_estoque_deposito, editar_estoque_exposicao
+from services.editar_produto import editar_nome_produto, editar_categoria, editar_codigo_barras, editar_quantidade, editar_unidade, editar_valor_unitario, editar_estoque_deposito, editar_estoque_exposicao
 from services.buscar_produto import buscar_nome_por_id
 
 if __name__ == "__main__":
@@ -18,7 +18,7 @@ if __name__ == "__main__":
     
     editar_codigo_barras(id_produto, input("Novo código de barras: "))
     
-    editar_medida_quantidade(id_produto, input("Nova quantidade: (ex: 750ml, 2l)").upper())
+    editar_quantidade(id_produto, input("Nova quantidade: (ex: 750ml, 2l)").upper())
     
     editar_unidade(id_produto, input("Nova unidade: ").upper())
     
