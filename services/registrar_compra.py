@@ -4,7 +4,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 from utils.conectar_banco import conectar_banco
 from utils.validacoes import validar_positivo, validar_nao_negativo
-from services.estoque import registrar_movimento
+from services.estoque import registrar_movimento, ajustar_estoque_deposito
 
 
 def iniciar_compra(fornecedor=None):
@@ -18,6 +18,15 @@ def iniciar_compra(fornecedor=None):
         return cursor.lastrowid
     finally:
         conn.close()
+
+def _validar_compra_aberta(conn, id_compra):
+    compra = conn.execute(
+        "SELECT status FROM compra WHERE id_compra = ?", (id_compra,)
+    ).fetchone()
+    if compra is None:
+        raise ValueError(f"Compra {id_compra} não encontrada.")
+    if compra[0] != "ABERTA":
+        raise ValueError(f"Compra {id_compra} não está aberta (status atual: {compra[0]}).")
 
 
 def adicionar_item_compra(id_compra, codigo_barras, quantidade, valor_custo_unitario, margem_lucro):
@@ -196,18 +205,17 @@ def cancelar_compra(id_compra):
     """
     conn = conectar_banco()
     try:
+        _validar_compra_aberta(conn, id_compra)
         itens = conn.execute(
             "SELECT id_produto, quantidade FROM item_compra WHERE id_compra = ?", (id_compra,)
         ).fetchall()
 
         for id_produto, quantidade in itens:
-            conn.execute("""
-                UPDATE estoque
-                SET estoque_deposito = estoque_deposito - ?, ultima_atualizacao = CURRENT_TIMESTAMP
-                WHERE id_produto = ?
-            """, (quantidade, id_produto))
-
-            registrar_movimento(conn, id_produto, "CANCELAMENTO_COMPRA", "estoque_deposito", -quantidade, id_compra)
+            ajustar_estoque_deposito(
+                id_produto, -quantidade,
+                conn=conn, tipo="CANCELAMENTO_COMPRA", origem_id=id_compra,
+                exigir_produto_ativo=False,
+            )
 
         conn.execute("UPDATE compra SET status = 'CANCELADA' WHERE id_compra = ?", (id_compra,))
         conn.commit()
