@@ -80,24 +80,6 @@ def adicionar_item_compra(id_compra, codigo_barras, quantidade, valor_custo_unit
         conn.close()
 
 
-def _validar_compra_aberta(conn, id_compra):
-
-    compra = conn.execute(
-        "SELECT status FROM compra WHERE id_compra = ?",
-        (id_compra,)
-    ).fetchone()
-
-    if compra is None:
-        raise ValueError(
-            f"Compra {id_compra} não encontrada."
-        )
-
-    if compra[0] != "ABERTA":
-        raise ValueError(
-            f"Compra {id_compra} não está aberta (status atual: '{compra[0]}')."
-        )
-
-
 def _buscar_produto(conn, codigo_barras):
     produto = conn.execute("""
         SELECT id_produto,
