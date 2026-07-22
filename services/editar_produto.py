@@ -99,33 +99,3 @@ def editar_valor_unitario(id_produto, novo_valor):
         return buscar_valor_unitario_por_id(id_produto) # Se o valor unitário for None, não faz nada e retorna o valor atual.
     validar_nao_negativo(novo_valor, "Valor unitário")
     return _atualizar_campo_produto(id_produto, "valor_unitario", novo_valor)
-
-
-# ---------- campos da tabela estoque ----------
-
-def editar_estoque_deposito(id_produto, novo_valor):
-    if novo_valor is None:
-        return buscar_estoque_deposito_por_id(id_produto) # Se o valor for None, não faz nada e retorna o valor atual.
-    validar_nao_negativo(novo_valor, "Estoque de depósito")
-    return _atualizar_campo_estoque(id_produto, "estoque_deposito", novo_valor)
-
-
-def editar_estoque_exposicao(id_produto, novo_valor):
-    if novo_valor is None:
-        return buscar_estoque_exposicao_por_id(id_produto) # Se o valor for None, não faz nada e retorna o valor atual.
-    validar_nao_negativo(novo_valor, "Estoque de exposição")
-    return _atualizar_campo_estoque(id_produto, "estoque_exposicao", novo_valor)
-
-
-def editar_capacidade_exposicao(id_produto, novo_valor):
-    if novo_valor is None:
-        return buscar_capacidade_exposicao_por_id(id_produto) # Se o valor for None, não faz nada e retorna o valor atual.
-    validar_nao_negativo(novo_valor, "Capacidade de exposição", feminino=True)
-    return _atualizar_campo_estoque(id_produto, "capacidade_exposicao", novo_valor)
-
-
-def editar_estoque_minimo(id_produto, novo_valor):
-    if novo_valor is None:
-        return buscar_estoque_minimo_por_id(id_produto) # Se o valor for None, não faz nada e retorna o valor atual.
-    validar_nao_negativo(novo_valor, "Estoque mínimo")
-    return _atualizar_campo_estoque(id_produto, "estoque_minimo", novo_valor)

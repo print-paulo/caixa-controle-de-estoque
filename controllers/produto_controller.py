@@ -11,8 +11,6 @@ from services.editar_produto import (
     editar_medida_embalagem,
     editar_unidade,
     editar_valor_unitario,
-    editar_estoque_deposito,
-    editar_estoque_exposicao,
 )
 
 from services.excluir_produto import excluir_produto, reativar_produto
@@ -161,8 +159,6 @@ def executar_edicao():
     input_campo_editar("Nova medida da embalagem (ex: 750ML, 1L): ", editar_medida_embalagem, id_produto)
     input_campo_editar("Nova unidade: ", editar_unidade, id_produto)
     input_campo_editar("Novo valor unitário: ", editar_valor_unitario, id_produto, float)
-    input_campo_editar("Novo estoque de depósito: ", editar_estoque_deposito, id_produto, int)
-    input_campo_editar("Novo estoque de exposição: ", editar_estoque_exposicao, id_produto, int)
 
     print(f"\nProduto (id {id_produto}) atualizado com sucesso.")
     return id_produto

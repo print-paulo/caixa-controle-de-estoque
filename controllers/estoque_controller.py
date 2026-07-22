@@ -1,4 +1,5 @@
 import sys
+from http.server import nobody_uid
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
@@ -11,6 +12,8 @@ from services.estoque import (
     ajustar_estoque_deposito,
     ajustar_estoque_exposicao,
     listar_movimentos,
+    editar_capacidade_exposicao,
+    editar_estoque_minimo
 )
 from services.buscar_produto import buscar_por_codigo_barras
 from utils.leitor_barras import codigo_lido
@@ -130,10 +133,12 @@ def executar_ajuste():
         return
 
     print("\n1 - Ajustar estoque de depósito")
-    print("2 - Ajustar estoque de exposição")
+    print("\n2 - Ajustar estoque de exposição")
+    print("\n3 - Ajustar estoque minimo de depósito")
+    print("4 - Ajustar capacidade de exposição")
     opcao = input("Escolha: ")
 
-    if opcao not in ("1", "2"):
+    if opcao not in ("1", "2", "3", "4"):
         print("Opção inválida.")
         return
 
@@ -147,9 +152,15 @@ def executar_ajuste():
         if opcao == "1":
             novo_valor = ajustar_estoque_deposito(id_produto, delta)
             print(f"Estoque de depósito ajustado. Novo valor: {novo_valor}")
-        else:
+        elif opcao == "2":
             novo_valor = ajustar_estoque_exposicao(id_produto, delta)
             print(f"Estoque de exposição ajustado. Novo valor: {novo_valor}")
+        elif opcao == "3":
+            novo_valor = editar_estoque_minimo(id_produto, delta)
+            print(f"Estoque minimo ajustado. Novo valor: {novo_valor}")
+        elif opcao == "4":
+            novo_valor = editar_capacidade_exposicao(id_produto, delta)
+            print(f"Novo limite de capacidade ajustado. Novo valor: {novo_valor}")
 
     except ValueError as e:
         print(f"Erro: {e}")
