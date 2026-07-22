@@ -106,7 +106,7 @@ def executar_cadastro(codigo_barras=None):
     """
     nome = _pedir_texto("Digite o nome do produto: ")
     categoria = _pedir_texto("Digite a categoria do produto: ", obrigatorio=False)
-    medida_embalagem = _pedir_texto("Digite a medida da embalagem: ", obrigatorio=False)
+    medida = _pedir_texto("Digite a medida da embalagem (ex: 750ML, 1L): ", obrigatorio=False)
     unidade = _pedir_texto("Digite a unidade do produto: ", obrigatorio=False)
     capacidade = _pedir_inteiro_nao_negativo("Digite a capacidade minima de exposição: ")
     minimo = _pedir_inteiro_nao_negativo("Informe a quantidade minima para se ter em estoque: ")
@@ -123,7 +123,7 @@ def executar_cadastro(codigo_barras=None):
                 nome_produto=nome,
                 nome_categoria=categoria,
                 codigo_barras=codigo,
-                medida_embalagem=medida_embalagem,
+                medida_embalagem=medida,
                 unidade=unidade,
                 capacidade_exposicao=capacidade,
                 estoque_minimo=minimo,
@@ -158,7 +158,7 @@ def executar_edicao():
     input_campo_editar("Novo nome do produto: ", editar_nome_produto, id_produto)
     input_campo_editar("Nova categoria: ", editar_categoria, id_produto)
     input_campo_editar("Novo código de barras: ", editar_codigo_barras, id_produto)
-    input_campo_editar("Nova quantidade (ex: 750ML, 1L): ", editar_quantidade, id_produto)
+    input_campo_editar("Nova medida da embalagem (ex: 750ML, 1L): ", editar_medida_embalagem, id_produto)
     input_campo_editar("Nova unidade: ", editar_unidade, id_produto)
     input_campo_editar("Novo valor unitário: ", editar_valor_unitario, id_produto, float)
     input_campo_editar("Novo estoque de depósito: ", editar_estoque_deposito, id_produto, int)
