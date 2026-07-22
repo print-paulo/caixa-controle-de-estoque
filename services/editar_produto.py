@@ -82,10 +82,10 @@ def editar_codigo_barras_com_leitor(id_produto):
     return editar_codigo_barras(id_produto, codigo)
 
 
-def editar_quantidade(id_produto, nova_quantidade):
-    if not nova_quantidade or not nova_quantidade.strip():
+def editar_medida_embalagem(id_produto, nova_medida_embalagem):
+    if not nova_medida_embalagem or not nova_medida_embalagem.strip():
         return buscar_quantidade_por_id(id_produto) # Se a quantidade for uma string vazia, não faz nada e retorna a quantidade atual.
-    return _atualizar_campo_produto(id_produto, "quantidade", nova_quantidade)
+    return _atualizar_campo_produto(id_produto, "medida_embalagem", nova_medida_embalagem)
 
 
 def editar_unidade(id_produto, nova_unidade):

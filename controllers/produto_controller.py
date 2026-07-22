@@ -8,7 +8,7 @@ from services.editar_produto import (
     editar_nome_produto,
     editar_categoria,
     editar_codigo_barras,
-    editar_quantidade,
+    editar_medida_embalagem,
     editar_unidade,
     editar_valor_unitario,
     editar_estoque_deposito,
@@ -106,7 +106,7 @@ def executar_cadastro(codigo_barras=None):
     """
     nome = _pedir_texto("Digite o nome do produto: ")
     categoria = _pedir_texto("Digite a categoria do produto: ", obrigatorio=False)
-    medida = _pedir_texto("Digite a medida da quantidade: ", obrigatorio=False)
+    medida_embalagem = _pedir_texto("Digite a medida da embalagem: ", obrigatorio=False)
     unidade = _pedir_texto("Digite a unidade do produto: ", obrigatorio=False)
     capacidade = _pedir_inteiro_nao_negativo("Digite a capacidade minima de exposição: ")
     minimo = _pedir_inteiro_nao_negativo("Informe a quantidade minima para se ter em estoque: ")
@@ -123,7 +123,7 @@ def executar_cadastro(codigo_barras=None):
                 nome_produto=nome,
                 nome_categoria=categoria,
                 codigo_barras=codigo,
-                quantidade=medida,
+                medida_embalagem=medida_embalagem,
                 unidade=unidade,
                 capacidade_exposicao=capacidade,
                 estoque_minimo=minimo,
