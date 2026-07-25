@@ -4,8 +4,6 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 from utils.conectar_banco import conectar_banco
 from utils.validacoes import validar_nao_negativo
-from services.buscar_produto import buscar_capacidade_exposicao_por_id, buscar_estoque_minimo_por_id
-from services.editar_produto import _atualizar_campo_estoque
 
 def _produto_ativo_existe(conn, id_produto):
     existe = conn.execute(
@@ -276,10 +274,19 @@ def _ajustar_campo_estoque(id_produto, coluna, delta, conn=None, tipo="AJUSTE", 
             conn.close()
 
 
-def editar_capacidade_exposicao(id_produto, novo_valor):
-    if novo_valor is None:
-        return buscar_capacidade_exposicao_por_id(id_produto) # Se o valor for None, não faz nada e retorna o valor atual.
-    return _atualizar_campo_estoque(id_produto, "capacidade_exposicao", novo_valor)
+def ajustar_capacidade_exposicao(id_produto, delta, conn=None, tipo="AJUSTE", origem_id=None, exigir_produto_ativo=True):
+    """Soma `delta` (positivo ou negativo) à capacidade de exposição. Retorna o novo valor."""
+    return _ajustar_campo_estoque(
+        id_produto, "capacidade_exposicao", delta,
+        conn=conn, tipo=tipo, origem_id=origem_id, exigir_produto_ativo=exigir_produto_ativo,
+    )
+
+def ajustar_estoque_minimo(id_produto, delta, conn=None, tipo="AJUSTE", origem_id=None, exigir_produto_ativo=True):
+    """Soma `delta` (positivo ou negativo) ao estoque mínimo. Retorna o novo valor."""
+    return _ajustar_campo_estoque(
+        id_produto, "estoque_minimo", delta,
+        conn=conn, tipo=tipo, origem_id=origem_id, exigir_produto_ativo=exigir_produto_ativo,
+    )
 
 def ajustar_estoque_deposito(id_produto, delta, conn=None, tipo="AJUSTE", origem_id=None, exigir_produto_ativo=True):
     """Soma `delta` (positivo ou negativo) ao estoque de depósito. Retorna o novo valor."""
@@ -294,9 +301,3 @@ def ajustar_estoque_exposicao(id_produto, delta, conn=None, tipo="AJUSTE", orige
         id_produto, "estoque_exposicao", delta,
         conn=conn, tipo=tipo, origem_id=origem_id, exigir_produto_ativo=exigir_produto_ativo,
     )
-
-def editar_estoque_minimo(id_produto, novo_valor):
-    if novo_valor is None:
-        return buscar_estoque_minimo_por_id(id_produto) # Se o valor for None, não faz nada e retorna o valor atual.
-    validar_nao_negativo(novo_valor, "Estoque mínimo")
-    return _atualizar_campo_estoque(id_produto, "estoque_minimo", novo_valor)

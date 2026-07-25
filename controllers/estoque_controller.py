@@ -1,5 +1,4 @@
 import sys
-from http.server import nobody_uid
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
@@ -11,11 +10,17 @@ from services.estoque import (
     repor_exposicao,
     ajustar_estoque_deposito,
     ajustar_estoque_exposicao,
+    ajustar_capacidade_exposicao,
+    ajustar_estoque_minimo,
     listar_movimentos,
-    editar_capacidade_exposicao,
-    editar_estoque_minimo
 )
-from services.buscar_produto import buscar_por_codigo_barras
+from services.buscar_produto import (
+    buscar_por_codigo_barras,
+    buscar_estoque_deposito_por_id,
+    buscar_estoque_exposicao_por_id,
+    buscar_capacidade_exposicao_por_id,
+    buscar_estoque_minimo_por_id,
+)
 from utils.leitor_barras import codigo_lido
 
 
@@ -122,46 +127,60 @@ def executar_reposicao():
 
 # ----------- ajustar estoque --------------
 
+_CAMPOS_AJUSTAVEIS = {
+    "1": ("estoque de depósito", ajustar_estoque_deposito, buscar_estoque_deposito_por_id),
+    "2": ("estoque de exposição", ajustar_estoque_exposicao, buscar_estoque_exposicao_por_id),
+    "3": ("estoque mínimo", ajustar_estoque_minimo, buscar_estoque_minimo_por_id),
+    "4": ("capacidade de exposição", ajustar_capacidade_exposicao, buscar_capacidade_exposicao_por_id),
+}
+
+
 def executar_ajuste():
     """
-    Ajuste manual de estoque (achou mais, quebrou, perdeu, contagem
-    física divergente etc.). Diferente da edição de produto: aqui você
-    informa quanto SOMAR ou SUBTRAIR, não o valor final.
+    Ajusta um dos campos numéricos de estoque (depósito, exposição,
+    estoque mínimo ou capacidade de exposição) pro valor que o usuário
+    quer ver -- sem precisar calcular soma/subtração de cabeça.
+
+    Por trás dos panos, o sistema mostra o valor atual, pede o valor
+    final desejado, calcula o delta necessário (novo - atual) e usa a
+    mesma função de ajuste por delta (com validação de não ficar
+    negativo e log no histórico de movimentação) usada em todo o resto
+    do sistema.
     """
     id_produto = _obter_id_produto()
     if id_produto is None:
         return
 
     print("\n1 - Ajustar estoque de depósito")
-    print("\n2 - Ajustar estoque de exposição")
-    print("\n3 - Ajustar estoque minimo de depósito")
+    print("2 - Ajustar estoque de exposição")
+    print("3 - Ajustar estoque mínimo")
     print("4 - Ajustar capacidade de exposição")
     opcao = input("Escolha: ")
 
-    if opcao not in ("1", "2", "3", "4"):
+    if opcao not in _CAMPOS_AJUSTAVEIS:
         print("Opção inválida.")
         return
 
+    nome_campo, funcao_ajuste, funcao_buscar_atual = _CAMPOS_AJUSTAVEIS[opcao]
+
+    valor_atual = funcao_buscar_atual(id_produto)
+    if valor_atual is None:
+        print(f"Não foi possível encontrar o valor atual de {nome_campo} para esse produto.")
+        return
+
+    print(f"Valor atual de {nome_campo}: {valor_atual}")
+
     try:
-        delta = int(input("Quantidade a ajustar (positivo pra somar, negativo pra subtrair): "))
+        novo_valor_desejado = int(input(f"Novo valor de {nome_campo}: "))
     except ValueError:
         print("Valor inválido.")
         return
 
-    try:
-        if opcao == "1":
-            novo_valor = ajustar_estoque_deposito(id_produto, delta)
-            print(f"Estoque de depósito ajustado. Novo valor: {novo_valor}")
-        elif opcao == "2":
-            novo_valor = ajustar_estoque_exposicao(id_produto, delta)
-            print(f"Estoque de exposição ajustado. Novo valor: {novo_valor}")
-        elif opcao == "3":
-            novo_valor = editar_estoque_minimo(id_produto, delta)
-            print(f"Estoque minimo ajustado. Novo valor: {novo_valor}")
-        elif opcao == "4":
-            novo_valor = editar_capacidade_exposicao(id_produto, delta)
-            print(f"Novo limite de capacidade ajustado. Novo valor: {novo_valor}")
+    delta = novo_valor_desejado - valor_atual
 
+    try:
+        novo_valor = funcao_ajuste(id_produto, delta)
+        print(f"{nome_campo.capitalize()} ajustado. Novo valor: {novo_valor}")
     except ValueError as e:
         print(f"Erro: {e}")
 
