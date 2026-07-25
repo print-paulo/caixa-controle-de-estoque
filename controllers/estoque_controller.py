@@ -82,11 +82,11 @@ def executar_consulta():
         print("Opção inválida.")
 
 
-def _imprimir_linha_estoque(linha):
-    id_produto, nome, deposito, exposicao, capacidade, minimo, atualizado = linha
+def _imprimir_linha_estoque(estoque):
     print(
-        f"[{id_produto}] {nome} — depósito: {deposito} | exposição: {exposicao} "
-        f"| capacidade exposição: {capacidade} | mínimo: {minimo} | atualizado em: {atualizado}"
+        f"[{estoque.id_produto}] {estoque.nome_produto} — depósito: {estoque.estoque_deposito} "
+        f"| exposição: {estoque.estoque_exposicao} | capacidade exposição: {estoque.capacidade_exposicao} "
+        f"| mínimo: {estoque.estoque_minimo} | atualizado em: {estoque.ultima_atualizacao}"
     )
 
 
