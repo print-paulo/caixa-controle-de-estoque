@@ -231,7 +231,7 @@ def executar_busca():
 
 def _imprimir_produto(produto):
     print(
-        f"[{produto['id_produto']}] {produto['nome_produto']} — "
-        f"código: {produto['codigo_barras']} | medida: {produto['medida_embalagem']} | "
-        f"unidade: {produto['unidade']} | valor: {produto['valor_unitario']}"
+        f"[{produto.id_produto}] {produto.nome_produto} — "
+        f"código: {produto.codigo_barras} | medida: {produto.medida_embalagem} | "
+        f"unidade: {produto.unidade} | valor: {produto.valor_unitario}"
     )

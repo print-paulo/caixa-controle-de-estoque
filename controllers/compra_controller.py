@@ -51,7 +51,7 @@ def executar_compra():
             else:
                 continue
 
-        nome_produto = produto[4]  # coluna nome_produto
+        nome_produto = produto.nome_produto
 
         try:
             quantidade = int(input(f"Quantidade comprada de '{nome_produto}': "))

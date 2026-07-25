@@ -37,7 +37,7 @@ def executar_venda():
             print("Produto não encontrado ou inativo.\n")
             continue
 
-        nome_produto = produto[4]  # coluna nome_produto
+        nome_produto = produto.nome_produto
 
         try:
             quantidade = int(input(f"Quantidade de '{nome_produto}': "))

@@ -48,7 +48,7 @@ def _obter_id_produto():
         if produto is None:
             print("Produto não encontrado ou inativo.")
             return None
-        return produto[0]  # id_produto
+        return produto.id_produto
 
     print("Opção inválida.")
     return None
