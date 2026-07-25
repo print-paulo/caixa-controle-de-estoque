@@ -109,21 +109,22 @@ def executar_busca_compra():
             return
 
         compra = buscar_compra_por_id(id_compra)
-        print(compra if compra else "Compra não encontrada.")
-
-        if compra:
+        if compra is None:
+            print("Compra não encontrada.")
+        else:
+            _imprimir_compra(compra)
             print("\nItens da compra:")
             for item in listar_itens_compra(id_compra):
-                print(item)
+                _imprimir_item_compra(item)
 
     elif opcao == "2":
         for compra in listar_compras():
-            print(compra)
+            _imprimir_compra(compra)
 
     elif opcao == "3":
         status = input("Status (ABERTA/FINALIZADA/CANCELADA): ").strip().upper()
         for compra in listar_compras(status=status):
-            print(compra)
+            _imprimir_compra(compra)
 
     elif opcao == "4":
         try:
@@ -132,7 +133,29 @@ def executar_busca_compra():
             print("Id inválido.")
             return
         for registro in listar_compras_por_produto(id_produto):
-            print(registro)
+            _imprimir_item_historico_compra(registro)
 
     else:
         print("Opção inválida.")
+
+
+def _imprimir_compra(compra):
+    print(
+        f"[{compra['id_compra']}] {compra['data_hora']} | "
+        f"fornecedor: {compra['fornecedor']} | status: {compra['status']}"
+    )
+
+
+def _imprimir_item_compra(item):
+    print(
+        f"  {item['nome_produto']} — {item['quantidade']}x "
+        f"custo R$ {item['valor_custo_unitario']:.2f} = R$ {item['sub_total']:.2f} "
+        f"(novo preço de venda: R$ {item['valor_venda_calculado']:.2f})"
+    )
+
+
+def _imprimir_item_historico_compra(registro):
+    print(
+        f"[compra {registro['id_compra']}] {registro['data_hora']} — "
+        f"{registro['quantidade']}x custo R$ {registro['valor_custo_unitario']:.2f} = R$ {registro['sub_total']:.2f}"
+    )
