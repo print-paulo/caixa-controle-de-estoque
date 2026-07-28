@@ -5,6 +5,7 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 from utils.conectar_banco import conectar_banco
 from utils.validacoes import validar_nao_negativo
 from models.estoque import Estoque
+from models.movimento_estoque import MovimentoEstoque
 
 def _produto_ativo_existe(conn, id_produto):
     existe = conn.execute(
@@ -72,7 +73,7 @@ def listar_movimentos(id_produto=None, tipo=None, limite=50):
         where = f"WHERE {' AND '.join(condicoes)}" if condicoes else ""
         parametros.append(limite)
 
-        return conn.execute(f"""
+        rows = conn.execute(f"""
             SELECT m.id_movimento, m.id_produto, p.nome_produto, m.tipo,
                    m.campo, m.quantidade, m.origem_id, m.data_hora
             FROM movimento_estoque m
@@ -81,6 +82,7 @@ def listar_movimentos(id_produto=None, tipo=None, limite=50):
             ORDER BY m.data_hora DESC, m.id_movimento DESC
             LIMIT ?
         """, parametros).fetchall()
+        return MovimentoEstoque.from_rows(rows)
     finally:
         conn.close()
 

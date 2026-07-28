@@ -224,7 +224,7 @@ def executar_historico():
         return
 
     print()
-    for id_mov, id_prod, nome, tipo_mov, campo, quantidade, origem_id, data_hora in movimentos:
-        sinal = "+" if quantidade >= 0 else ""
-        origem = f" (origem: {origem_id})" if origem_id is not None else ""
-        print(f"[{data_hora}] {nome} — {tipo_mov} em {campo}: {sinal}{quantidade}{origem}")
+    for mov in movimentos:
+        sinal = "+" if mov.quantidade >= 0 else ""
+        origem = f" (origem: {mov.origem_id})" if mov.origem_id is not None else ""
+        print(f"[{mov.data_hora}] {mov.nome_produto} — {mov.tipo} em {mov.campo}: {sinal}{mov.quantidade}{origem}")
