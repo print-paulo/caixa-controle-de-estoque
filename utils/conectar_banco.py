@@ -6,4 +6,5 @@ BANCO = Path(__file__).resolve().parent.parent / "database" / "banco.db"
 def conectar_banco():
     conn = sqlite3.connect(BANCO)
     conn.execute("PRAGMA foreign_keys = ON")
+    conn.row_factory = sqlite3.Row
     return conn

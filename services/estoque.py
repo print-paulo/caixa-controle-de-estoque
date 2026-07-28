@@ -4,6 +4,8 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 from utils.conectar_banco import conectar_banco
 from utils.validacoes import validar_nao_negativo
+from models.estoque import Estoque
+from models.movimento_estoque import MovimentoEstoque
 
 def _produto_ativo_existe(conn, id_produto):
     existe = conn.execute(
@@ -71,7 +73,7 @@ def listar_movimentos(id_produto=None, tipo=None, limite=50):
         where = f"WHERE {' AND '.join(condicoes)}" if condicoes else ""
         parametros.append(limite)
 
-        return conn.execute(f"""
+        rows = conn.execute(f"""
             SELECT m.id_movimento, m.id_produto, p.nome_produto, m.tipo,
                    m.campo, m.quantidade, m.origem_id, m.data_hora
             FROM movimento_estoque m
@@ -80,6 +82,7 @@ def listar_movimentos(id_produto=None, tipo=None, limite=50):
             ORDER BY m.data_hora DESC, m.id_movimento DESC
             LIMIT ?
         """, parametros).fetchall()
+        return MovimentoEstoque.from_rows(rows)
     finally:
         conn.close()
 
@@ -94,13 +97,14 @@ def consultar_estoque_por_id(id_produto):
     """
     conn = conectar_banco()
     try:
-        return conn.execute("""
+        row = conn.execute("""
             SELECT p.id_produto, p.nome_produto, e.estoque_deposito, e.estoque_exposicao,
                    e.capacidade_exposicao, e.estoque_minimo, e.ultima_atualizacao
             FROM estoque e
             JOIN produto p ON p.id_produto = e.id_produto
             WHERE e.id_produto = ?
         """, (id_produto,)).fetchone()
+        return Estoque.from_row(row)
     finally:
         conn.close()
 
@@ -109,7 +113,7 @@ def listar_estoque_completo():
     """Lista o estoque de todos os produtos ativos, ordenado por nome."""
     conn = conectar_banco()
     try:
-        return conn.execute("""
+        rows = conn.execute("""
             SELECT p.id_produto, p.nome_produto, e.estoque_deposito, e.estoque_exposicao,
                    e.capacidade_exposicao, e.estoque_minimo, e.ultima_atualizacao
             FROM estoque e
@@ -117,6 +121,7 @@ def listar_estoque_completo():
             WHERE p.ativo = 1
             ORDER BY p.nome_produto
         """).fetchall()
+        return Estoque.from_rows(rows)
     finally:
         conn.close()
 

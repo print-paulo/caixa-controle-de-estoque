@@ -205,7 +205,10 @@ def executar_busca():
         if codigo is None:
             return
         produto = buscar_por_codigo_barras(codigo)
-        print(produto if produto else "Produto não encontrado.")
+        if produto is None:
+            print("Produto não encontrado.")
+        else:
+            _imprimir_produto(produto)
 
     elif opcao == "2":
         nome = input("Nome (ou parte dele): ")
@@ -213,14 +216,22 @@ def executar_busca():
         if not produtos:
             print("Nenhum produto encontrado.")
         for produto in produtos:
-            print(produto)
+            _imprimir_produto(produto)
 
     elif opcao == "3":
         produtos = listar_todos()
         if not produtos:
             print("Nenhum produto cadastrado.")
         for produto in produtos:
-            print(produto)
+            _imprimir_produto(produto)
 
     else:
         print("Opção inválida.")
+
+
+def _imprimir_produto(produto):
+    print(
+        f"[{produto.id_produto}] {produto.nome_produto} — "
+        f"código: {produto.codigo_barras} | medida: {produto.medida_embalagem} | "
+        f"unidade: {produto.unidade} | valor: {produto.valor_unitario}"
+    )

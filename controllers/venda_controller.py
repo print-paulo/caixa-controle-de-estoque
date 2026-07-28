@@ -37,7 +37,7 @@ def executar_venda():
             print("Produto não encontrado ou inativo.\n")
             continue
 
-        nome_produto = produto[4]  # coluna nome_produto
+        nome_produto = produto.nome_produto
 
         try:
             quantidade = int(input(f"Quantidade de '{nome_produto}': "))
@@ -105,21 +105,22 @@ def executar_busca_venda():
             return
 
         venda = buscar_venda_por_id(id_venda)
-        print(venda if venda else "Venda não encontrada.")
-
-        if venda:
+        if venda is None:
+            print("Venda não encontrada.")
+        else:
+            _imprimir_venda(venda)
             print("\nItens da venda:")
             for item in listar_itens_venda(id_venda):
-                print(item)
+                _imprimir_item_venda(item)
 
     elif opcao == "2":
         for venda in listar_vendas():
-            print(venda)
+            _imprimir_venda(venda)
 
     elif opcao == "3":
         status = input("Status (ABERTA/FINALIZADA/CANCELADA): ").strip().upper()
         for venda in listar_vendas(status=status):
-            print(venda)
+            _imprimir_venda(venda)
 
     elif opcao == "4":
         try:
@@ -128,7 +129,28 @@ def executar_busca_venda():
             print("Id inválido.")
             return
         for registro in listar_vendas_por_produto(id_produto):
-            print(registro)
+            _imprimir_item_historico_venda(registro)
 
     else:
         print("Opção inválida.")
+
+
+def _imprimir_venda(venda):
+    print(
+        f"[{venda.id_venda}] {venda.data_hora} | "
+        f"pagamento: {venda.forma_pagamento} | status: {venda.status}"
+    )
+
+
+def _imprimir_item_venda(item):
+    print(
+        f"  {item.nome_produto} — {item.quantidade}x "
+        f"R$ {item.valor_unitario_momento:.2f} = R$ {item.sub_total:.2f}"
+    )
+
+
+def _imprimir_item_historico_venda(registro):
+    print(
+        f"[venda {registro['id_venda']}] {registro['data_hora']} — "
+        f"{registro['quantidade']}x R$ {registro['valor_unitario_momento']:.2f} = R$ {registro['sub_total']:.2f}"
+    )

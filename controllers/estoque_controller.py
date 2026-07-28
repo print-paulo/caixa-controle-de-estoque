@@ -48,7 +48,7 @@ def _obter_id_produto():
         if produto is None:
             print("Produto não encontrado ou inativo.")
             return None
-        return produto[0]  # id_produto
+        return produto.id_produto
 
     print("Opção inválida.")
     return None
@@ -82,11 +82,11 @@ def executar_consulta():
         print("Opção inválida.")
 
 
-def _imprimir_linha_estoque(linha):
-    id_produto, nome, deposito, exposicao, capacidade, minimo, atualizado = linha
+def _imprimir_linha_estoque(estoque):
     print(
-        f"[{id_produto}] {nome} — depósito: {deposito} | exposição: {exposicao} "
-        f"| capacidade exposição: {capacidade} | mínimo: {minimo} | atualizado em: {atualizado}"
+        f"[{estoque.id_produto}] {estoque.nome_produto} — depósito: {estoque.estoque_deposito} "
+        f"| exposição: {estoque.estoque_exposicao} | capacidade exposição: {estoque.capacidade_exposicao} "
+        f"| mínimo: {estoque.estoque_minimo} | atualizado em: {estoque.ultima_atualizacao}"
     )
 
 
@@ -224,7 +224,7 @@ def executar_historico():
         return
 
     print()
-    for id_mov, id_prod, nome, tipo_mov, campo, quantidade, origem_id, data_hora in movimentos:
-        sinal = "+" if quantidade >= 0 else ""
-        origem = f" (origem: {origem_id})" if origem_id is not None else ""
-        print(f"[{data_hora}] {nome} — {tipo_mov} em {campo}: {sinal}{quantidade}{origem}")
+    for mov in movimentos:
+        sinal = "+" if mov.quantidade >= 0 else ""
+        origem = f" (origem: {mov.origem_id})" if mov.origem_id is not None else ""
+        print(f"[{mov.data_hora}] {mov.nome_produto} — {mov.tipo} em {mov.campo}: {sinal}{mov.quantidade}{origem}")

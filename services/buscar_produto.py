@@ -4,6 +4,7 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 from utils.conectar_banco import conectar_banco
+from models.produto import Produto
 
 
 def buscar_por_codigo_barras(codigo):
@@ -18,7 +19,7 @@ def buscar_por_codigo_barras(codigo):
     produto = cursor.fetchone()
     conn.close()
 
-    return produto
+    return Produto.from_row(produto)
 
 #Pra usar a função de busca, o codigo precisa ser algo como isso:
 # codigo = codigo_lido()
@@ -36,7 +37,7 @@ def buscar_por_nome(nome):
     produtos = cursor.fetchall()
     conn.close()
 
-    return produtos
+    return Produto.from_rows(produtos)
 
 def buscar_por_id(id_produto):
     conn = conectar_banco()
@@ -50,7 +51,7 @@ def buscar_por_id(id_produto):
     produto = cursor.fetchone()
     conn.close()
 
-    return produto
+    return Produto.from_row(produto)
 
 def _buscar_campo_por_id(id_produto, coluna):
     """Função interna: busca o valor de uma única coluna da tabela produto pelo id."""
@@ -122,7 +123,7 @@ def listar_todos():
     produtos = cursor.fetchall()
     conn.close()
 
-    return produtos
+    return Produto.from_rows(produtos)
 
 #pra chamar o listar_todos seria algo como isso:
 # produtos = listar_todos()

@@ -3,6 +3,8 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 from utils.conectar_banco import conectar_banco
+from models.venda import Venda
+from models.item_venda import ItemVenda
 
 
 def buscar_venda_por_id(id_venda):
@@ -17,7 +19,7 @@ def buscar_venda_por_id(id_venda):
     venda = cursor.fetchone()
     conn.close()
 
-    return venda
+    return Venda.from_row(venda)
 
 
 def listar_itens_venda(id_venda):
@@ -27,7 +29,7 @@ def listar_itens_venda(id_venda):
     """
     conn = conectar_banco()
     cursor = conn.execute("""
-        SELECT iv.id_item_venda, iv.id_produto, p.nome_produto, iv.quantidade,
+        SELECT iv.id_item_venda, iv.id_venda, iv.id_produto, p.nome_produto, iv.quantidade,
                iv.valor_unitario_momento, iv.sub_total
         FROM item_venda iv
         JOIN produto p ON p.id_produto = iv.id_produto
@@ -37,7 +39,7 @@ def listar_itens_venda(id_venda):
     itens = cursor.fetchall()
     conn.close()
 
-    return itens
+    return ItemVenda.from_rows(itens)
 
 
 def listar_vendas(status=None):
@@ -65,7 +67,7 @@ def listar_vendas(status=None):
     vendas = cursor.fetchall()
     conn.close()
 
-    return vendas
+    return Venda.from_rows(vendas)
 
 
 def listar_vendas_por_produto(id_produto):
