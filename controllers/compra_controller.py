@@ -141,8 +141,8 @@ def executar_busca_compra():
 
 def _imprimir_compra(compra):
     print(
-        f"[{compra['id_compra']}] {compra['data_hora']} | "
-        f"fornecedor: {compra['fornecedor']} | status: {compra['status']}"
+        f"[{compra.id_compra}] {compra.data_hora} | "
+        f"fornecedor: {compra.fornecedor} | status: {compra.status}"
     )
 
 

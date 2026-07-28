@@ -3,6 +3,7 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 from utils.conectar_banco import conectar_banco
+from models.compra import Compra
 
 
 def buscar_compra_por_id(id_compra):
@@ -17,7 +18,7 @@ def buscar_compra_por_id(id_compra):
     compra = cursor.fetchone()
     conn.close()
 
-    return compra
+    return Compra.from_row(compra)
 
 
 def listar_itens_compra(id_compra):
@@ -65,7 +66,7 @@ def listar_compras(status=None):
     compras = cursor.fetchall()
     conn.close()
 
-    return compras
+    return Compra.from_rows(compras)
 
 
 def listar_compras_por_produto(id_produto):
