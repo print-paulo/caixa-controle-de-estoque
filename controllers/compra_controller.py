@@ -148,9 +148,9 @@ def _imprimir_compra(compra):
 
 def _imprimir_item_compra(item):
     print(
-        f"  {item['nome_produto']} — {item['quantidade']}x "
-        f"custo R$ {item['valor_custo_unitario']:.2f} = R$ {item['sub_total']:.2f} "
-        f"(novo preço de venda: R$ {item['valor_venda_calculado']:.2f})"
+        f"  {item.nome_produto} — {item.quantidade}x "
+        f"custo R$ {item.valor_custo_unitario:.2f} = R$ {item.sub_total:.2f} "
+        f"(novo preço de venda: R$ {item.valor_venda_calculado:.2f})"
     )
 
 
