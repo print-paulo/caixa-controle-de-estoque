@@ -144,8 +144,8 @@ def _imprimir_venda(venda):
 
 def _imprimir_item_venda(item):
     print(
-        f"  {item['nome_produto']} — {item['quantidade']}x "
-        f"R$ {item['valor_unitario_momento']:.2f} = R$ {item['sub_total']:.2f}"
+        f"  {item.nome_produto} — {item.quantidade}x "
+        f"R$ {item.valor_unitario_momento:.2f} = R$ {item.sub_total:.2f}"
     )
 
 
