@@ -136,9 +136,8 @@ def relatorio_vendas(data_inicio=None, data_fim=None):
         where = f"WHERE {' AND '.join(condicoes)}"
 
         resumo = conn.execute(f"""
-            SELECT COUNT(DISTINCT v.id_venda), COALESCE(SUM(iv.sub_total), 0)
+            SELECT COUNT(*), COALESCE(SUM(v.valor_total), 0)
             FROM venda v
-            JOIN item_venda iv ON iv.id_venda = v.id_venda
             {where}
         """, parametros).fetchone()
 
@@ -146,12 +145,11 @@ def relatorio_vendas(data_inicio=None, data_fim=None):
         ticket_medio = (total_vendido / quantidade_vendas) if quantidade_vendas else 0.0
 
         por_forma_pagamento = conn.execute(f"""
-            SELECT v.forma_pagamento, COUNT(DISTINCT v.id_venda), COALESCE(SUM(iv.sub_total), 0)
+            SELECT v.forma_pagamento, COUNT(*), COALESCE(SUM(v.valor_total), 0)
             FROM venda v
-            JOIN item_venda iv ON iv.id_venda = v.id_venda
             {where}
             GROUP BY v.forma_pagamento
-            ORDER BY SUM(iv.sub_total) DESC
+            ORDER BY SUM(v.valor_total) DESC
         """, parametros).fetchall()
 
         return {

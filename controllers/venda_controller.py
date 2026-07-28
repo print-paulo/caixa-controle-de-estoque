@@ -11,6 +11,8 @@ from services.registrar_venda import (
     calcular_total_venda,
     finalizar_venda,
     cancelar_venda,
+    eh_pagamento_no_cartao,
+    TAXA_CARTAO,
 )
 from services.buscar_venda import (
     buscar_venda_por_id,
@@ -85,6 +87,8 @@ def executar_venda():
         total_final = finalizar_venda(id_venda, forma_pagamento)
         print(f"\nVenda {id_venda} finalizada com sucesso!")
         print(f"Forma de pagamento: {forma_pagamento}")
+        if eh_pagamento_no_cartao(forma_pagamento):
+            print(f"(Taxa de cartão de {TAXA_CARTAO * 100:.0f}% aplicada sobre o subtotal de R$ {total:.2f})")
         print(f"Total: R$ {total_final:.2f}")
     except ValueError as e:
         print(f"Erro ao finalizar venda: {e}")
@@ -136,9 +140,10 @@ def executar_busca_venda():
 
 
 def _imprimir_venda(venda):
+    valor = f"R$ {venda.valor_total:.2f}" if venda.valor_total is not None else "—"
     print(
         f"[{venda.id_venda}] {venda.data_hora} | "
-        f"pagamento: {venda.forma_pagamento} | status: {venda.status}"
+        f"pagamento: {venda.forma_pagamento} | total: {valor} | status: {venda.status}"
     )
 
 

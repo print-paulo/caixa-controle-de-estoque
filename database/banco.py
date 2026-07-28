@@ -43,6 +43,7 @@ def criar_tabelas(conn): # Cria as tabelas categoria, produto, estoque, venda, i
             id_venda INTEGER PRIMARY KEY AUTOINCREMENT,
             data_hora TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
             forma_pagamento TEXT,
+            valor_total REAL,
             status TEXT NOT NULL DEFAULT 'ABERTA'
         )
     """)

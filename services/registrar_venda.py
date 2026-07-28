@@ -1,10 +1,23 @@
 import sys
+import unicodedata
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 from utils.conectar_banco import conectar_banco
 from utils.validacoes import validar_positivo
 from services.estoque import registrar_movimento, ajustar_estoque_exposicao
+
+TAXA_CARTAO = 0.03  # 3% de acréscimo sobre o total quando a forma de pagamento é cartão
+
+
+def _normalizar_forma_pagamento(forma_pagamento):
+    """Remove acentos e caixa alta/baixa, pra comparar de forma tolerante (ex: 'Cartão' == 'cartao')."""
+    sem_acento = unicodedata.normalize("NFKD", forma_pagamento).encode("ascii", "ignore").decode()
+    return sem_acento.strip().lower()
+
+
+def eh_pagamento_no_cartao(forma_pagamento):
+    return "cartao" in _normalizar_forma_pagamento(forma_pagamento)
 
 
 def iniciar_venda():
@@ -221,7 +234,16 @@ def calcular_total_venda(id_venda):
 def finalizar_venda(id_venda, forma_pagamento):
     """
     Marca a venda como 'FINALIZADA' e registra a forma de pagamento.
-    Recusa finalizar vendas sem nenhum item. Retorna o valor total da venda.
+    Recusa finalizar vendas sem nenhum item.
+
+    Se a forma de pagamento for cartão, aplica TAXA_CARTAO (3%) sobre o
+    total dos itens. O valor final (já com a taxa, se aplicável) é
+    congelado em `venda.valor_total` -- assim, se a taxa mudar no futuro,
+    vendas antigas continuam refletindo o valor realmente cobrado na
+    época, e relatórios não precisam recalcular a taxa por cima da forma
+    de pagamento salva.
+
+    Retorna o valor total final (com taxa, se houver).
     """
     if not forma_pagamento or not forma_pagamento.strip():
         raise ValueError("Forma de pagamento não pode ser vazia.")
@@ -234,15 +256,27 @@ def finalizar_venda(id_venda, forma_pagamento):
         if tem_item is None:
             raise ValueError("Não é possível finalizar uma venda sem itens.")
 
+        subtotal = conn.execute(
+            "SELECT SUM(sub_total) FROM item_venda WHERE id_venda = ?", (id_venda,)
+        ).fetchone()[0] or 0.0
+
+        if eh_pagamento_no_cartao(forma_pagamento):
+            valor_total = round(subtotal * (1 + TAXA_CARTAO), 2)
+        else:
+            valor_total = subtotal
+
         conn.execute(
-            "UPDATE venda SET forma_pagamento = ?, status = 'FINALIZADA' WHERE id_venda = ?",
-            (forma_pagamento.strip(), id_venda),
+            "UPDATE venda SET forma_pagamento = ?, valor_total = ?, status = 'FINALIZADA' WHERE id_venda = ?",
+            (forma_pagamento.strip(), valor_total, id_venda),
         )
         conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
     finally:
         conn.close()
 
-    return calcular_total_venda(id_venda)
+    return valor_total
 
 
 def cancelar_venda(id_venda):

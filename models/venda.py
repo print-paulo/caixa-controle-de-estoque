@@ -8,6 +8,7 @@ class Venda:
     id_venda: int
     data_hora: str
     forma_pagamento: Optional[str]
+    valor_total: Optional[float]
     status: str
 
     @classmethod
@@ -19,6 +20,7 @@ class Venda:
             id_venda=row["id_venda"],
             data_hora=row["data_hora"],
             forma_pagamento=row["forma_pagamento"],
+            valor_total=row["valor_total"],
             status=row["status"],
         )
 
