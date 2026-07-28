@@ -137,8 +137,8 @@ def executar_busca_venda():
 
 def _imprimir_venda(venda):
     print(
-        f"[{venda['id_venda']}] {venda['data_hora']} | "
-        f"pagamento: {venda['forma_pagamento']} | status: {venda['status']}"
+        f"[{venda.id_venda}] {venda.data_hora} | "
+        f"pagamento: {venda.forma_pagamento} | status: {venda.status}"
     )
 
 
