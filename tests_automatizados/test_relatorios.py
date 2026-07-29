@@ -91,4 +91,10 @@ class TestRelatorioLucro:
 
     def test_sem_movimento_nenhum_lucro_e_zero(self):
         relatorio = relatorio_lucro()
-        assert relatorio == {"total_vendido": 0, "total_investido": 0, "lucro_bruto": 0}
+        assert relatorio == {
+            "total_vendido": 0,
+            "total_investido": 0,
+            "lucro_bruto": 0,
+            "lucro_real": 0,
+            "unidades_sem_custo_registrado": 0,
+        }
