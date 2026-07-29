@@ -76,11 +76,6 @@ def adicionar_item_venda(id_venda, codigo_barras, quantidade):
 
         quantidade_reposta = _repor_estoque_exposicao(conn, id_produto, id_venda)
 
-        if quantidade_reposta:
-            print(
-                f"Reposição automática: {quantidade_reposta} unidades foram movidas para a exposição."
-            )
-
         # Agora verifica se há estoque suficiente
         _validar_estoque(conn,id_produto,quantidade,nome_produto)
 

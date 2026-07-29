@@ -4,7 +4,6 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 from services.buscar_produto import buscar_por_id, buscar_nome_por_id, buscar_codigo_barras_por_id, buscar_categoria_por_id, buscar_medida_embalagem_por_id, buscar_unidade_por_id, buscar_valor_unitario_por_id, buscar_estoque_deposito_por_id, buscar_estoque_exposicao_por_id, buscar_capacidade_exposicao_por_id, buscar_estoque_minimo_por_id
-from utils.leitor_barras import codigo_lido
 from utils.conectar_banco import conectar_banco
 from utils.validacoes import validar_nao_negativo
 from utils.db_campos import atualizar_campo_produto, atualizar_campo_estoque
@@ -70,16 +69,6 @@ def editar_codigo_barras(id_produto, novo_codigo_barras):
     if not novo_codigo_barras or not novo_codigo_barras.strip():
         return buscar_codigo_barras_por_id(id_produto) # Se o código de barras for uma string vazia, não faz nada e retorna o código de barras atual.
     return _atualizar_campo_produto(id_produto, "codigo_barras", novo_codigo_barras)
-
-
-def editar_codigo_barras_com_leitor(id_produto):
-    """Lê o novo código de barras direto do leitor, em vez de receber por parâmetro."""
-    print("Aponte o leitor para o novo código de barras (ou digite 'sair' para cancelar):")
-    codigo = codigo_lido()
-    if codigo is None:
-        print("Edição cancelada.")
-        return False
-    return editar_codigo_barras(id_produto, codigo)
 
 
 def editar_medida_embalagem(id_produto, nova_medida_embalagem):
