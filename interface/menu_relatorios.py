@@ -8,6 +8,7 @@ from controllers.relatorios_controller import (
     executar_relatorio_vendas,
     executar_relatorio_compras,
     executar_relatorio_lucro,
+    executar_exportar_excel,
 )
 
 
@@ -21,6 +22,7 @@ def menu_relatorios():
         print("3 - Vendas")
         print("4 - Compras")
         print("5 - Lucro")
+        print("6 - Exportar tudo para Excel")
         print("0 - Voltar")
 
         opcao = input("\nEscolha: ")
@@ -39,6 +41,9 @@ def menu_relatorios():
 
         elif opcao == "5":
             executar_relatorio_lucro()
+
+        elif opcao == "6":
+            executar_exportar_excel()
 
         elif opcao == "0":
             break

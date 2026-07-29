@@ -1,4 +1,5 @@
 import sys
+from datetime import datetime
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
@@ -10,6 +11,7 @@ from services.relatorios import (
     relatorio_compras,
     relatorio_lucro,
 )
+from services.exportar_excel import exportar_relatorio_excel
 
 
 def _pedir_periodo():
@@ -113,3 +115,27 @@ def executar_relatorio_lucro():
             f"  Atenção: {relatorio['unidades_sem_custo_registrado']} unidade(s) vendida(s) "
             "sem custo registrado ficaram de fora desse cálculo."
         )
+
+
+# ----------- exportar tudo para excel --------------
+
+def executar_exportar_excel():
+    """
+    Pede o período (mesmo padrão dos outros relatórios) e o caminho de
+    destino, e gera um .xlsx com um resumo executivo + uma aba por
+    entidade (Produtos, Estoque, Vendas, Compras, Movimentação).
+
+    Produtos e Estoque são sempre o snapshot ATUAL; só Vendas, Compras e
+    Movimentação respeitam o período escolhido.
+    """
+    print("\nEsse período filtra Vendas, Compras e Movimentação (Produtos e Estoque são sempre o snapshot atual).")
+    data_inicio, data_fim = _pedir_periodo()
+
+    nome_padrao = f"relatorio_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+    caminho = input(f"Salvar como (Enter pra usar '{nome_padrao}'): ").strip() or nome_padrao
+
+    try:
+        caminho_gerado = exportar_relatorio_excel(caminho, data_inicio, data_fim)
+        print(f"\nRelatório exportado com sucesso: {caminho_gerado}")
+    except ValueError as e:
+        print(f"Erro ao exportar: {e}")
