@@ -23,6 +23,7 @@ def criar_tabelas(conn): # Cria as tabelas categoria, produto, estoque, venda, i
             medida_embalagem TEXT,
             unidade TEXT,
             valor_unitario REAL,
+            custo_unitario REAL,
             FOREIGN KEY (id_categoria) REFERENCES categoria(id_categoria)
         )
     """)
@@ -54,6 +55,7 @@ def criar_tabelas(conn): # Cria as tabelas categoria, produto, estoque, venda, i
             id_produto INTEGER NOT NULL,
             quantidade INTEGER NOT NULL,
             valor_unitario_momento REAL NOT NULL,
+            custo_unitario_momento REAL,
             sub_total REAL NOT NULL,
             FOREIGN KEY (id_venda) REFERENCES venda(id_venda),
             FOREIGN KEY (id_produto) REFERENCES produto(id_produto)

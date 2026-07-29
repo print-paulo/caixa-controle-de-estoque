@@ -172,6 +172,12 @@ def relatorio_compras(data_inicio=None, data_fim=None):
     Retorna um dicionário com:
     - quantidade_compras: nº de compras finalizadas no período
     - total_investido: soma dos totais (em custo) das compras
+    - lucro_esperado_total: soma de (valor_venda_calculado - valor_custo_unitario)
+      * quantidade de cada item comprado no período -- é o lucro que se
+      espera obter SE tudo que foi comprado for vendido pelo preço
+      calculado. Diferente do lucro_real do relatório de lucro (que só
+      conta o que já foi vendido de verdade), esse é um lucro projetado
+      no momento da compra.
     - por_fornecedor: lista de (fornecedor, quantidade, total)
     """
     conn = conectar_banco()
@@ -181,13 +187,16 @@ def relatorio_compras(data_inicio=None, data_fim=None):
         where = f"WHERE {' AND '.join(condicoes)}"
 
         resumo = conn.execute(f"""
-            SELECT COUNT(DISTINCT c.id_compra), COALESCE(SUM(ic.sub_total), 0)
+            SELECT
+                COUNT(DISTINCT c.id_compra),
+                COALESCE(SUM(ic.sub_total), 0),
+                COALESCE(SUM((ic.valor_venda_calculado - ic.valor_custo_unitario) * ic.quantidade), 0)
             FROM compra c
             JOIN item_compra ic ON ic.id_compra = c.id_compra
             {where}
         """, parametros).fetchone()
 
-        quantidade_compras, total_investido = resumo
+        quantidade_compras, total_investido, lucro_esperado_total = resumo
 
         por_fornecedor = conn.execute(f"""
             SELECT COALESCE(c.fornecedor, 'NÃO INFORMADO'), COUNT(DISTINCT c.id_compra), COALESCE(SUM(ic.sub_total), 0)
@@ -201,6 +210,7 @@ def relatorio_compras(data_inicio=None, data_fim=None):
         return {
             "quantidade_compras": quantidade_compras,
             "total_investido": total_investido,
+            "lucro_esperado_total": lucro_esperado_total,
             "por_fornecedor": por_fornecedor,
         }
     finally:
@@ -211,17 +221,31 @@ def relatorio_compras(data_inicio=None, data_fim=None):
 
 def relatorio_lucro(data_inicio=None, data_fim=None):
     """
-    Lucro bruto do período: total vendido - total investido em compras
-    (regime de caixa -- compara o que entrou de vendas com o que saiu em
-    compras no mesmo período, não o custo exato de cada unidade vendida).
+    Retorna dois números de lucro diferentes, lado a lado:
 
-    Isso é uma APROXIMAÇÃO: o sistema não rastreia de qual lote/compra
-    cada unidade vendida veio (sem FIFO/custo médio por lote), então não
-    dá pra calcular a margem exata de cada venda individual. Pra ter
-    lucro por produto/venda de forma precisa, seria necessário registrar
-    o custo no momento da venda (ex: coluna extra em item_venda).
+    - lucro_bruto: total vendido - total investido em compras no período
+      (regime de caixa -- compara o que entrou de vendas com o que saiu
+      em compras no mesmo período). É uma APROXIMAÇÃO: se você compra um
+      lote grande e vende só uma parte no período, esse número fica
+      distorcido (parece prejuízo mesmo quando cada unidade vendida deu
+      lucro de verdade), porque mistura "dinheiro investido em estoque"
+      com "lucro de vendas realizadas".
 
-    Retorna um dicionário com: total_vendido, total_investido, lucro_bruto.
+    - lucro_real: soma de (preço de venda - custo) * quantidade, calculado
+      por cada item efetivamente VENDIDO no período, usando o custo que
+      estava congelado no produto no momento daquela venda
+      (`item_venda.custo_unitario_momento`). Isso é a margem de verdade
+      das vendas que já aconteceram, sem ser afetado pelo que ainda está
+      parado no estoque.
+
+    Se algum item foi vendido sem custo registrado (produto que nunca
+    passou por uma compra no sistema, ou vendido antes dessa métrica
+    existir), ele fica de fora do lucro_real -- a quantidade de unidades
+    nessa situação vem em `unidades_sem_custo_registrado`, pra deixar
+    claro quando o número pode estar incompleto.
+
+    Retorna um dicionário com: total_vendido, total_investido, lucro_bruto,
+    lucro_real, unidades_sem_custo_registrado.
     """
     vendas = relatorio_vendas(data_inicio, data_fim)
     compras = relatorio_compras(data_inicio, data_fim)
@@ -229,8 +253,47 @@ def relatorio_lucro(data_inicio=None, data_fim=None):
     total_vendido = vendas["total_vendido"]
     total_investido = compras["total_investido"]
 
+    lucro_real, unidades_sem_custo = _calcular_lucro_real(data_inicio, data_fim)
+
     return {
         "total_vendido": total_vendido,
         "total_investido": total_investido,
         "lucro_bruto": total_vendido - total_investido,
+        "lucro_real": lucro_real,
+        "unidades_sem_custo_registrado": unidades_sem_custo,
     }
+
+
+def _calcular_lucro_real(data_inicio=None, data_fim=None):
+    """
+    Soma (valor_unitario_momento - custo_unitario_momento) * quantidade
+    de cada item de venda finalizada no período. Itens sem custo
+    registrado (custo_unitario_momento NULL) são ignorados na soma, mas
+    contados à parte.
+    """
+    conn = conectar_banco()
+    try:
+        condicoes, parametros = _filtro_periodo("v.data_hora", data_inicio, data_fim)
+        condicoes.insert(0, "v.status = 'FINALIZADA'")
+        where = f"WHERE {' AND '.join(condicoes)}"
+
+        resultado = conn.execute(f"""
+            SELECT
+                COALESCE(SUM(
+                    CASE WHEN iv.custo_unitario_momento IS NOT NULL
+                         THEN (iv.valor_unitario_momento - iv.custo_unitario_momento) * iv.quantidade
+                         ELSE 0
+                    END
+                ), 0),
+                COALESCE(SUM(
+                    CASE WHEN iv.custo_unitario_momento IS NULL THEN iv.quantidade ELSE 0 END
+                ), 0)
+            FROM item_venda iv
+            JOIN venda v ON v.id_venda = iv.id_venda
+            {where}
+        """, parametros).fetchone()
+
+        lucro_real, unidades_sem_custo = resultado
+        return lucro_real, unidades_sem_custo
+    finally:
+        conn.close()

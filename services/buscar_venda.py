@@ -30,7 +30,7 @@ def listar_itens_venda(id_venda):
     conn = conectar_banco()
     cursor = conn.execute("""
         SELECT iv.id_item_venda, iv.id_venda, iv.id_produto, p.nome_produto, iv.quantidade,
-               iv.valor_unitario_momento, iv.sub_total
+               iv.valor_unitario_momento, iv.custo_unitario_momento, iv.sub_total
         FROM item_venda iv
         JOIN produto p ON p.id_produto = iv.id_produto
         WHERE iv.id_venda = ?

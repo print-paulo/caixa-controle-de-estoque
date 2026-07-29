@@ -21,6 +21,33 @@ from services.buscar_compra import (
 from controllers.produto_controller import executar_cadastro
 
 
+def _pedir_custo_unitario(nome_produto):
+    """
+    Pergunta o custo unitário de duas formas possíveis:
+    1 - direto, quando já se sabe quanto custa cada unidade
+    2 - a partir do preço pago por caixa/pacote e quantas unidades vêm
+        nela (o sistema calcula: preço da caixa / unidades na caixa)
+
+    Levanta ValueError se a entrada for inválida (mesmo comportamento de
+    antes, pra manter compatível com quem chama).
+    """
+    print(f"Custo de '{nome_produto}':")
+    print("1 - Informar o valor por unidade direto")
+    print("2 - Calcular a partir do preço da caixa/pacote")
+    opcao = input("Escolha: ").strip()
+
+    if opcao == "2":
+        preco_caixa = float(input("Preço pago pela caixa/pacote: "))
+        unidades_na_caixa = int(input("Quantas unidades vêm na caixa/pacote: "))
+        if unidades_na_caixa <= 0:
+            raise ValueError("Quantidade de unidades na caixa deve ser maior que zero.")
+        custo_unitario = preco_caixa / unidades_na_caixa
+        print(f"Custo por unidade calculado: R$ {custo_unitario:.4f}")
+        return custo_unitario
+
+    return float(input(f"Valor de custo (unitário) de '{nome_produto}': "))
+
+
 def executar_compra():
     fornecedor = input("Nome do fornecedor (ou deixe em branco): ").strip() or None
     id_compra = iniciar_compra(fornecedor)
@@ -55,7 +82,7 @@ def executar_compra():
 
         try:
             quantidade = int(input(f"Quantidade comprada de '{nome_produto}': "))
-            valor_custo = float(input(f"Valor de custo (unitário) de '{nome_produto}': "))
+            valor_custo = _pedir_custo_unitario(nome_produto)
             margem = float(input("Margem de lucro (ex: 0.3 para 30%): "))
         except ValueError:
             print("Valor inválido, tente novamente.\n")
@@ -64,9 +91,11 @@ def executar_compra():
         try:
             sub_total, preco_venda = adicionar_item_compra(id_compra, codigo, quantidade, valor_custo, margem)
             total_itens += 1
+            lucro_por_unidade = preco_venda - valor_custo
             print(
                 f"Adicionado: {quantidade}x {nome_produto} "
-                f"(custo total R$ {sub_total:.2f}, novo preço de venda R$ {preco_venda:.2f})\n"
+                f"(custo total R$ {sub_total:.2f}, novo preço de venda R$ {preco_venda:.2f}, "
+                f"lucro/unidade R$ {lucro_por_unidade:.2f})\n"
             )
         except ValueError as e:
             print(f"Erro: {e}\n")
@@ -147,10 +176,13 @@ def _imprimir_compra(compra):
 
 
 def _imprimir_item_compra(item):
+    lucro_por_unidade = item.valor_venda_calculado - item.valor_custo_unitario
+    lucro_total = lucro_por_unidade * item.quantidade
     print(
         f"  {item.nome_produto} — {item.quantidade}x "
         f"custo R$ {item.valor_custo_unitario:.2f} = R$ {item.sub_total:.2f} "
-        f"(novo preço de venda: R$ {item.valor_venda_calculado:.2f})"
+        f"(preço de venda: R$ {item.valor_venda_calculado:.2f} | "
+        f"lucro/unidade: R$ {lucro_por_unidade:.2f} | lucro total esperado: R$ {lucro_total:.2f})"
     )
 
 

@@ -12,6 +12,7 @@ class Produto:
     medida_embalagem: Optional[str]
     unidade: Optional[str]
     valor_unitario: Optional[float]
+    custo_unitario: Optional[float]
 
     @classmethod
     def from_row(cls, row):
@@ -27,6 +28,7 @@ class Produto:
             medida_embalagem=row["medida_embalagem"],
             unidade=row["unidade"],
             valor_unitario=row["valor_unitario"],
+            custo_unitario=row["custo_unitario"],
         )
 
     @classmethod

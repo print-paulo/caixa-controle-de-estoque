@@ -66,7 +66,7 @@ def adicionar_item_compra(id_compra, codigo_barras, quantidade, valor_custo_unit
 
         _acrescentar_estoque(conn, id_produto, quantidade, id_compra)
 
-        _atualizar_valor_venda(conn, id_produto, valor_venda_calculado)
+        _atualizar_valor_venda(conn, id_produto, valor_venda_calculado, valor_custo_unitario)
 
         conn.commit()
 
@@ -133,11 +133,11 @@ def _acrescentar_estoque(conn, id_produto, quantidade, id_compra):
     registrar_movimento(conn, id_produto, "COMPRA", "estoque_deposito", quantidade, id_compra)
 
 
-def _atualizar_valor_venda(conn, id_produto, valor_venda_calculado):
+def _atualizar_valor_venda(conn, id_produto, valor_venda_calculado, valor_custo_unitario):
 
     conn.execute(
-        "UPDATE produto SET valor_unitario = ? WHERE id_produto = ?",
-        (valor_venda_calculado, id_produto),
+        "UPDATE produto SET valor_unitario = ?, custo_unitario = ? WHERE id_produto = ?",
+        (valor_venda_calculado, valor_custo_unitario, id_produto),
     )
 
 

@@ -72,6 +72,7 @@ def executar_relatorio_compras():
 
     print(f"\nCompras finalizadas: {relatorio['quantidade_compras']}")
     print(f"Total investido: R$ {relatorio['total_investido']:.2f}")
+    print(f"Lucro esperado total (se tudo for vendido pelo preço calculado): R$ {relatorio['lucro_esperado_total']:.2f}")
 
     if relatorio["por_fornecedor"]:
         print("\nPor fornecedor:")
@@ -83,18 +84,32 @@ def executar_relatorio_compras():
 
 def executar_relatorio_lucro():
     """
-    Lucro bruto (regime de caixa): total vendido menos total investido em
-    compras no período. É uma aproximação -- não é o custo exato de cada
-    unidade vendida, já que o sistema não rastreia de qual compra veio
-    cada unidade (sem FIFO/custo médio por lote).
+    Mostra dois números de lucro lado a lado:
+
+    - Lucro bruto (regime de caixa): total vendido menos total investido
+      em compras no período. Aproximação simples, mas distorce quando
+      você compra mais do que vende no mesmo período.
+    - Lucro real: soma da margem (preço de venda - custo) de cada
+      unidade efetivamente vendida no período, usando o custo travado no
+      momento de cada venda. Mais preciso, mas só existe pra vendas
+      feitas depois que essa métrica passou a ser registrada -- vendas
+      antigas ou de produtos sem custo cadastrado ficam de fora (ver
+      aviso de unidades sem custo registrado).
     """
     data_inicio, data_fim = _pedir_periodo()
     relatorio = relatorio_lucro(data_inicio, data_fim)
 
     print(f"\nTotal vendido: R$ {relatorio['total_vendido']:.2f}")
     print(f"Total investido em compras: R$ {relatorio['total_investido']:.2f}")
-    print(f"Lucro bruto: R$ {relatorio['lucro_bruto']:.2f}")
+    print(f"Lucro bruto (regime de caixa): R$ {relatorio['lucro_bruto']:.2f}")
     print(
-        "\n(Aproximação por regime de caixa: compara vendas e compras do "
-        "período, não o custo exato de cada unidade vendida.)"
+        "  (aproximação: compara vendas e compras do período, "
+        "não o custo exato de cada unidade vendida)"
     )
+    print(f"\nLucro real (margem das vendas do período): R$ {relatorio['lucro_real']:.2f}")
+
+    if relatorio["unidades_sem_custo_registrado"]:
+        print(
+            f"  Atenção: {relatorio['unidades_sem_custo_registrado']} unidade(s) vendida(s) "
+            "sem custo registrado ficaram de fora desse cálculo."
+        )

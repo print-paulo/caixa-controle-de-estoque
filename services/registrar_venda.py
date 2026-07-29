@@ -47,7 +47,7 @@ def adicionar_item_venda(id_venda, codigo_barras, quantidade):
     try:
         _validar_venda_aberta(conn, id_venda)
 
-        id_produto, nome_produto, valor_unitario = _buscar_produto(conn,codigo_barras)
+        id_produto, nome_produto, valor_unitario, custo_unitario = _buscar_produto(conn,codigo_barras)
 
         quantidade_reposta = _repor_estoque_exposicao(conn, id_produto, id_venda)
 
@@ -61,7 +61,7 @@ def adicionar_item_venda(id_venda, codigo_barras, quantidade):
 
         sub_total = _calcular_subtotal(nome_produto,valor_unitario,quantidade)
 
-        _registrar_item_venda(conn,id_venda,id_produto,quantidade,valor_unitario,sub_total)
+        _registrar_item_venda(conn,id_venda,id_produto,quantidade,valor_unitario,custo_unitario,sub_total)
 
         _descontar_estoque(conn,id_produto,quantidade,id_venda)
 
@@ -161,7 +161,8 @@ def _buscar_produto(conn, codigo_barras):
     produto = conn.execute("""
         SELECT id_produto,
                nome_produto,
-               valor_unitario
+               valor_unitario,
+               custo_unitario
         FROM produto
         WHERE codigo_barras = ?
           AND ativo = 1
@@ -193,7 +194,7 @@ def _calcular_subtotal(nome_produto,valor_unitario, quantidade):
         raise ValueError(f"O produto '{nome_produto}' não possui preço cadastrado.")
     return quantidade * valor_unitario
 
-def _registrar_item_venda(conn, id_venda, id_produto, quantidade, valor_unitario, sub_total):
+def _registrar_item_venda(conn, id_venda, id_produto, quantidade, valor_unitario, custo_unitario, sub_total):
 
     conn.execute("""
         INSERT INTO item_venda
@@ -202,10 +203,11 @@ def _registrar_item_venda(conn, id_venda, id_produto, quantidade, valor_unitario
             id_produto,
             quantidade,
             valor_unitario_momento,
+            custo_unitario_momento,
             sub_total
         )
-        VALUES (?, ?, ?, ?, ?)
-    """, (id_venda, id_produto, quantidade, valor_unitario, sub_total))
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, (id_venda, id_produto, quantidade, valor_unitario, custo_unitario, sub_total))
 
 def _descontar_estoque(conn,id_produto,quantidade,id_venda):
 

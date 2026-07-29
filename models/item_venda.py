@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Optional
 
 
 @dataclass
@@ -16,6 +17,7 @@ class ItemVenda:
     nome_produto: str
     quantidade: int
     valor_unitario_momento: float
+    custo_unitario_momento: Optional[float]
     sub_total: float
 
     @classmethod
@@ -23,7 +25,8 @@ class ItemVenda:
         """
         Converte um sqlite3.Row vindo do JOIN `item_venda iv JOIN produto p`
         (colunas: id_item_venda, id_venda, id_produto, nome_produto,
-        quantidade, valor_unitario_momento, sub_total) num ItemVenda.
+        quantidade, valor_unitario_momento, custo_unitario_momento,
+        sub_total) num ItemVenda.
         """
         if row is None:
             return None
@@ -34,6 +37,7 @@ class ItemVenda:
             nome_produto=row["nome_produto"],
             quantidade=row["quantidade"],
             valor_unitario_momento=row["valor_unitario_momento"],
+            custo_unitario_momento=row["custo_unitario_momento"],
             sub_total=row["sub_total"],
         )
 
