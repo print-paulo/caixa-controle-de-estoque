@@ -12,7 +12,9 @@ from services.registrar_venda import (
     finalizar_venda,
     cancelar_venda,
     eh_pagamento_no_cartao,
-    TAXA_CARTAO,
+    taxa_cartao,
+    TAXA_CARTAO_DEBITO,
+    TAXA_CARTAO_CREDITO,
 )
 from services.buscar_venda import (
     buscar_venda_por_id,
@@ -81,14 +83,15 @@ def executar_venda():
         print("Venda cancelada. Estoque devolvido.")
         return
 
-    forma_pagamento = input("Forma de pagamento (dinheiro/cartao/pix): ").strip().lower()
+    forma_pagamento = input("Forma de pagamento (dinheiro/pix/debito/credito): ").strip().lower()
 
     try:
         total_final = finalizar_venda(id_venda, forma_pagamento)
         print(f"\nVenda {id_venda} finalizada com sucesso!")
         print(f"Forma de pagamento: {forma_pagamento}")
         if eh_pagamento_no_cartao(forma_pagamento):
-            print(f"(Taxa de cartão de {TAXA_CARTAO * 100:.0f}% aplicada sobre o subtotal de R$ {total:.2f})")
+            taxa = taxa_cartao(forma_pagamento)
+            print(f"(Taxa de cartão de {taxa * 100:.0f}% aplicada sobre o subtotal de R$ {total:.2f})")
         print(f"Total: R$ {total_final:.2f}")
     except ValueError as e:
         print(f"Erro ao finalizar venda: {e}")

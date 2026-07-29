@@ -7,7 +7,8 @@ from utils.conectar_banco import conectar_banco
 from utils.validacoes import validar_positivo
 from services.estoque import registrar_movimento, ajustar_estoque_exposicao
 
-TAXA_CARTAO = 0.03  # 3% de acréscimo sobre o total quando a forma de pagamento é cartão
+TAXA_CARTAO_DEBITO = 0.03   # 3% de acréscimo sobre o total no cartão de débito
+TAXA_CARTAO_CREDITO = 0.05  # 5% de acréscimo sobre o total no cartão de crédito
 
 
 def _normalizar_forma_pagamento(forma_pagamento):
@@ -17,7 +18,31 @@ def _normalizar_forma_pagamento(forma_pagamento):
 
 
 def eh_pagamento_no_cartao(forma_pagamento):
-    return "cartao" in _normalizar_forma_pagamento(forma_pagamento)
+    normalizado = _normalizar_forma_pagamento(forma_pagamento)
+    return "cartao" in normalizado or "debito" in normalizado or "credito" in normalizado
+
+
+def taxa_cartao(forma_pagamento):
+    """
+    Devolve a taxa (fração, ex: 0.03 = 3%) aplicável à forma de pagamento:
+    - contém 'débito' -> TAXA_CARTAO_DEBITO
+    - contém 'crédito' -> TAXA_CARTAO_CREDITO
+    - contém 'cartão' mas não diz qual dos dois -> ValueError (ambíguo,
+      já que a taxa é diferente pra cada um; não dá pra assumir uma)
+    - qualquer outra forma de pagamento (dinheiro, pix, etc.) -> 0.0
+    """
+    normalizado = _normalizar_forma_pagamento(forma_pagamento)
+
+    if "credito" in normalizado:
+        return TAXA_CARTAO_CREDITO
+    if "debito" in normalizado:
+        return TAXA_CARTAO_DEBITO
+    if "cartao" in normalizado:
+        raise ValueError(
+            f"Forma de pagamento '{forma_pagamento}' é ambígua: especifique "
+            "'cartão débito' ou 'cartão crédito' (a taxa é diferente pra cada um)."
+        )
+    return 0.0
 
 
 def iniciar_venda():
@@ -238,17 +263,21 @@ def finalizar_venda(id_venda, forma_pagamento):
     Marca a venda como 'FINALIZADA' e registra a forma de pagamento.
     Recusa finalizar vendas sem nenhum item.
 
-    Se a forma de pagamento for cartão, aplica TAXA_CARTAO (3%) sobre o
-    total dos itens. O valor final (já com a taxa, se aplicável) é
-    congelado em `venda.valor_total` -- assim, se a taxa mudar no futuro,
-    vendas antigas continuam refletindo o valor realmente cobrado na
-    época, e relatórios não precisam recalcular a taxa por cima da forma
-    de pagamento salva.
+    Se a forma de pagamento for cartão débito ou crédito, aplica a taxa
+    correspondente (TAXA_CARTAO_DEBITO ou TAXA_CARTAO_CREDITO) sobre o
+    total dos itens -- recusa se disser só "cartão" sem especificar qual
+    dos dois, já que a taxa é diferente pra cada um. O valor final (já
+    com a taxa, se aplicável) é congelado em `venda.valor_total` -- assim,
+    se a taxa mudar no futuro, vendas antigas continuam refletindo o
+    valor realmente cobrado na época, e relatórios não precisam
+    recalcular a taxa por cima da forma de pagamento salva.
 
     Retorna o valor total final (com taxa, se houver).
     """
     if not forma_pagamento or not forma_pagamento.strip():
         raise ValueError("Forma de pagamento não pode ser vazia.")
+
+    taxa = taxa_cartao(forma_pagamento)  # valida cedo (levanta se for "cartão" ambíguo)
 
     conn = conectar_banco()
     try:
@@ -262,10 +291,7 @@ def finalizar_venda(id_venda, forma_pagamento):
             "SELECT SUM(sub_total) FROM item_venda WHERE id_venda = ?", (id_venda,)
         ).fetchone()[0] or 0.0
 
-        if eh_pagamento_no_cartao(forma_pagamento):
-            valor_total = round(subtotal * (1 + TAXA_CARTAO), 2)
-        else:
-            valor_total = subtotal
+        valor_total = round(subtotal * (1 + taxa), 2) if taxa else subtotal
 
         conn.execute(
             "UPDATE venda SET forma_pagamento = ?, valor_total = ?, status = 'FINALIZADA' WHERE id_venda = ?",

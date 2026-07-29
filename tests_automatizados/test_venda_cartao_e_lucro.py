@@ -2,7 +2,7 @@ import pytest
 
 from services.registrar_venda import (
     iniciar_venda, adicionar_item_venda, finalizar_venda,
-    eh_pagamento_no_cartao, TAXA_CARTAO,
+    eh_pagamento_no_cartao, taxa_cartao, TAXA_CARTAO_DEBITO, TAXA_CARTAO_CREDITO,
 )
 from services.registrar_compra import iniciar_compra, adicionar_item_compra, finalizar_compra
 from services.buscar_venda import buscar_venda_por_id, listar_itens_venda
@@ -18,13 +18,33 @@ def _comprar(produto_id, quantidade, custo=30.0, margem=0.3, codigo="78912345678
 
 
 class TestEhPagamentoNoCartao:
-    @pytest.mark.parametrize("forma", ["cartao", "Cartão", "CARTÃO", "cartão de crédito", "no cartao"])
-    def test_reconhece_variacoes_de_cartao(self, forma):
+    @pytest.mark.parametrize("forma", [
+        "cartao", "Cartão", "CARTÃO", "cartão de crédito", "cartao debito", "no cartao", "débito", "crédito",
+    ])
+    def test_reconhece_variacoes_de_cartao_debito_ou_credito(self, forma):
         assert eh_pagamento_no_cartao(forma) is True
 
     @pytest.mark.parametrize("forma", ["DINHEIRO", "PIX", "dinheiro", "boleto"])
     def test_nao_reconhece_outras_formas(self, forma):
         assert eh_pagamento_no_cartao(forma) is False
+
+
+class TestTaxaCartao:
+    @pytest.mark.parametrize("forma", ["debito", "Débito", "cartão débito", "cartao de debito"])
+    def test_reconhece_debito(self, forma):
+        assert taxa_cartao(forma) == TAXA_CARTAO_DEBITO
+
+    @pytest.mark.parametrize("forma", ["credito", "Crédito", "cartão crédito", "cartao de credito"])
+    def test_reconhece_credito(self, forma):
+        assert taxa_cartao(forma) == TAXA_CARTAO_CREDITO
+
+    def test_cartao_sem_especificar_debito_ou_credito_e_ambiguo(self):
+        with pytest.raises(ValueError, match="ambígua"):
+            taxa_cartao("cartao")
+
+    @pytest.mark.parametrize("forma", ["DINHEIRO", "PIX", "boleto"])
+    def test_formas_sem_cartao_nao_tem_taxa(self, forma):
+        assert taxa_cartao(forma) == 0.0
 
 
 class TestTaxaDeCartaoNaFinalizacao:
@@ -36,21 +56,55 @@ class TestTaxaDeCartaoNaFinalizacao:
         assert total == pytest.approx(117.0)
         assert buscar_venda_por_id(id_venda).valor_total == pytest.approx(117.0)
 
-    def test_pagamento_no_cartao_aplica_taxa(self, produto_padrao):
+    def test_pagamento_no_credito_aplica_taxa_de_5_por_cento(self, produto_padrao):
         _comprar(produto_padrao, 20)
         id_venda = iniciar_venda()
         adicionar_item_venda(id_venda, "7891234567895", 3)  # subtotal = 117
         total = finalizar_venda(id_venda, "Cartão de Crédito")
-        esperado = round(117.0 * (1 + TAXA_CARTAO), 2)
+        esperado = round(117.0 * (1 + TAXA_CARTAO_CREDITO), 2)
         assert total == pytest.approx(esperado)
         assert buscar_venda_por_id(id_venda).valor_total == pytest.approx(esperado)
+
+    def test_pagamento_no_debito_aplica_taxa_de_3_por_cento(self, produto_padrao):
+        _comprar(produto_padrao, 20)
+        id_venda = iniciar_venda()
+        adicionar_item_venda(id_venda, "7891234567895", 3)  # subtotal = 117
+        total = finalizar_venda(id_venda, "Cartão de Débito")
+        esperado = round(117.0 * (1 + TAXA_CARTAO_DEBITO), 2)
+        assert total == pytest.approx(esperado)
+        assert buscar_venda_por_id(id_venda).valor_total == pytest.approx(esperado)
+
+    def test_debito_e_credito_geram_totais_diferentes(self, produto_padrao):
+        _comprar(produto_padrao, 20)
+
+        id_venda_debito = iniciar_venda()
+        adicionar_item_venda(id_venda_debito, "7891234567895", 1)  # subtotal = 39
+        total_debito = finalizar_venda(id_venda_debito, "debito")
+
+        id_venda_credito = iniciar_venda()
+        adicionar_item_venda(id_venda_credito, "7891234567895", 1)  # subtotal = 39
+        total_credito = finalizar_venda(id_venda_credito, "credito")
+
+        assert total_credito > total_debito
+
+    def test_finalizar_com_cartao_ambiguo_falha_e_nao_finaliza_a_venda(self, produto_padrao):
+        _comprar(produto_padrao, 20)
+        id_venda = iniciar_venda()
+        adicionar_item_venda(id_venda, "7891234567895", 1)
+
+        with pytest.raises(ValueError, match="ambígua"):
+            finalizar_venda(id_venda, "cartao")
+
+        venda = buscar_venda_por_id(id_venda)
+        assert venda.status == "ABERTA"  # não deve ter sido finalizada
+        assert venda.valor_total is None
 
     def test_taxa_de_cartao_e_insensivel_a_acento_e_caixa(self, produto_padrao):
         _comprar(produto_padrao, 20)
         id_venda = iniciar_venda()
         adicionar_item_venda(id_venda, "7891234567895", 1)  # subtotal = 39
-        total = finalizar_venda(id_venda, "CARTAO")
-        assert total == pytest.approx(round(39.0 * 1.03, 2))
+        total = finalizar_venda(id_venda, "CREDITO")
+        assert total == pytest.approx(round(39.0 * (1 + TAXA_CARTAO_CREDITO), 2))
 
     def test_venda_recem_criada_tem_valor_total_none(self, produto_padrao):
         _comprar(produto_padrao, 20)
