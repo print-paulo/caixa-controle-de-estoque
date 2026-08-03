@@ -41,7 +41,8 @@ def registrar_movimento(conn, id_produto, tipo, campo, quantidade, origem_id=Non
       não faz commit sozinha, quem chama é responsável por commitar).
     - tipo: 'VENDA', 'CANCELAMENTO_VENDA', 'COMPRA', 'CANCELAMENTO_COMPRA',
       'REPOSICAO' (automática, durante uma venda), 'REPOSICAO_MANUAL'
-      (via tela de estoque) ou 'AJUSTE' (correção manual).
+      (via tela de estoque), 'AJUSTE' (correção manual) ou
+      'IMPORTACAO_LEGADO' (carga inicial via database/importfromxlsx.py).
     - campo: 'estoque_deposito' ou 'estoque_exposicao'.
     - quantidade: delta aplicado (positivo = entrada, negativo = saída).
     - origem_id: id_venda ou id_compra relacionado, quando existir.

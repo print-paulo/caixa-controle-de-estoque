@@ -195,6 +195,7 @@ _TIPOS_MOVIMENTO = {
     "5": "REPOSICAO",
     "6": "REPOSICAO_MANUAL",
     "7": "AJUSTE",
+    "8": "IMPORTACAO_LEGADO",
 }
 
 
@@ -213,7 +214,7 @@ def executar_historico():
         return
 
     print("\nFiltrar por tipo de movimento? (Enter pra não filtrar)")
-    print("1-VENDA 2-CANCELAMENTO_VENDA 3-COMPRA 4-CANCELAMENTO_COMPRA 5-REPOSICAO 6-REPOSICAO_MANUAL 7-AJUSTE")
+    print("1-VENDA 2-CANCELAMENTO_VENDA 3-COMPRA 4-CANCELAMENTO_COMPRA 5-REPOSICAO 6-REPOSICAO_MANUAL 7-AJUSTE 8-IMPORTACAO_LEGADO")
     escolha_tipo = input("Escolha: ").strip()
     tipo = _TIPOS_MOVIMENTO.get(escolha_tipo)
 

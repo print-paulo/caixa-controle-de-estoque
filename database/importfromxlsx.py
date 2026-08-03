@@ -17,6 +17,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 from utils.conectar_banco import conectar_banco
 from database.banco import criar_tabelas
+from services.estoque import registrar_movimento
 
 PASTA_SCRIPT = Path(__file__).resolve().parent # Caminho absoluto da pasta onde está este script
 PASTA_PLANILHAS = Path("../planilhas").resolve() # Caminho absoluto da pasta "planilha" ao lado deste script
@@ -33,7 +34,7 @@ def linha_valida(row): # Verifica se uma linha da planilha é válida.
     return True
 
 
-def importar_arquivo(cursor, caminho_arquivo): # Importa um único arquivo .xlsx para o banco SQLite.
+def importar_arquivo(conn, cursor, caminho_arquivo): # Importa um único arquivo .xlsx para o banco SQLite.
     """Importa um único .xlsx e devolve (inseridos, ignorados) desse arquivo."""
     df = pd.read_excel(caminho_arquivo, sheet_name=0, header=1)
 
@@ -56,7 +57,10 @@ def importar_arquivo(cursor, caminho_arquivo): # Importa um único arquivo .xlsx
         estoque_deposito = int(row["Estoque Atual"]) if pd.notna(row.get("Estoque Atual")) else 0
         estoque_exposicao = 0
         capacidade_exposicao = None
-        valor_unitario = float(row["Valor Unitário"]) if pd.notna(row.get("Valor Unitário")) else 0.0
+        # 0.0 seria um preço "de graça" real, diferente de "sem preço cadastrado" --
+        # None deixa o produto visível no alerta de "produtos sem preço" do
+        # relatorio_produtos, e a venda recusa vender por engano de graça.
+        valor_unitario = float(row["Valor Unitário"]) if pd.notna(row.get("Valor Unitário")) else None
         ultima_atualizacao = row["Última Atualização"] if pd.notna(row.get("Última Atualização")) else None
 
         # Sem coluna "Categoria" nesta planilha -> fica sem categoria (id_categoria = NULL)
@@ -73,6 +77,11 @@ def importar_arquivo(cursor, caminho_arquivo): # Importa um único arquivo .xlsx
             VALUES (?, ?, ?, ?, ?, ?)
         """, (id_produto, estoque_deposito, estoque_exposicao, capacidade_exposicao, minimo,
               str(ultima_atualizacao) if ultima_atualizacao else None))
+
+        # Deixa rastro no histórico de movimentação, igual todo outro fluxo
+        # que mexe em estoque (compra, venda, ajuste, reposição) já faz.
+        if estoque_deposito:
+            registrar_movimento(conn, id_produto, "IMPORTACAO_LEGADO", "estoque_deposito", estoque_deposito)
 
         inseridos += 1
 
@@ -105,7 +114,7 @@ def importar(): # Função principal que importa todos os arquivos .xlsx da past
 
     for arquivo in arquivos:
         try:
-            inseridos, ignorados = importar_arquivo(cursor, arquivo)
+            inseridos, ignorados = importar_arquivo(conn, cursor, arquivo)
         except Exception as e:
             print(f"Erro ao importar '{arquivo.name}': {e}")
             continue
