@@ -142,6 +142,22 @@ def listar_todos():
 
     return Produto.from_rows(produtos)
 
+
+def listar_inativos():
+    """Lista produtos desativados (ativo = 0), pra telas de 'reativar produto'."""
+    conn = conectar_banco()
+    cursor = conn.execute("""
+        SELECT *
+        FROM produto
+        WHERE ativo = 0
+        ORDER BY nome_produto
+    """)
+
+    produtos = cursor.fetchall()
+    conn.close()
+
+    return Produto.from_rows(produtos)
+
 #pra chamar o listar_todos seria algo como isso:
 # produtos = listar_todos()
 # for produto in produtos:

@@ -5,7 +5,7 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 from PySide6.QtCore import QAbstractTableModel, QModelIndex, Qt
 from PySide6.QtWidgets import (
-    QAbstractItemView, QComboBox, QDialog, QDialogButtonBox, QDoubleSpinBox,
+    QAbstractItemView, QCheckBox, QComboBox, QDialog, QDialogButtonBox, QDoubleSpinBox,
     QFormLayout, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QMessageBox,
     QPushButton, QSpinBox, QTableView, QVBoxLayout, QWidget,
 )
@@ -18,6 +18,7 @@ from services.buscar_produto import (
     buscar_estoque_exposicao_por_id,
     buscar_estoque_minimo_por_id,
     listar_categorias,
+    listar_inativos,
     listar_todos,
 )
 from services.cadastrar_produto import cadastrar_produto_completo
@@ -30,7 +31,7 @@ from services.editar_produto import (
     editar_valor_unitario,
 )
 from services.estoque import ajustar_capacidade_exposicao, ajustar_estoque_minimo
-from services.excluir_produto import excluir_produto
+from services.excluir_produto import excluir_produto, reativar_produto
 
 
 COLUNAS = ["Id", "Nome", "Código de barras", "Medida", "Unidade", "Preço venda", "Custo"]
@@ -229,7 +230,7 @@ class ProdutoDialog(QDialog):
 
 
 class ProdutosView(QWidget):
-    """Tela principal de Produtos: busca, tabela, cadastro/edição/exclusão."""
+    """Tela principal de Produtos: busca, tabela, cadastro/edição/exclusão/reativação."""
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -238,27 +239,34 @@ class ProdutosView(QWidget):
         self.campo_busca.setPlaceholderText("Buscar por nome...")
         self.campo_busca.returnPressed.connect(self._buscar)
 
-        botao_buscar = QPushButton("Buscar")
-        botao_buscar.clicked.connect(self._buscar)
-        botao_limpar = QPushButton("Limpar busca")
-        botao_limpar.clicked.connect(self._carregar_todos)
+        self.botao_buscar = QPushButton("Buscar")
+        self.botao_buscar.clicked.connect(self._buscar)
+        self.botao_limpar = QPushButton("Limpar busca")
+        self.botao_limpar.clicked.connect(self._recarregar)
 
-        botao_novo = QPushButton("Novo produto")
-        botao_novo.clicked.connect(self._novo)
-        botao_editar = QPushButton("Editar")
-        botao_editar.clicked.connect(self._editar)
-        botao_excluir = QPushButton("Excluir")
-        botao_excluir.clicked.connect(self._excluir)
+        self.checkbox_desativados = QCheckBox("Mostrar desativados")
+        self.checkbox_desativados.stateChanged.connect(self._recarregar)
+
+        self.botao_novo = QPushButton("Novo produto")
+        self.botao_novo.clicked.connect(self._novo)
+        self.botao_editar = QPushButton("Editar")
+        self.botao_editar.clicked.connect(self._editar)
+        self.botao_excluir = QPushButton("Excluir")
+        self.botao_excluir.clicked.connect(self._excluir)
+        self.botao_reativar = QPushButton("Reativar")
+        self.botao_reativar.clicked.connect(self._reativar)
 
         barra_busca = QHBoxLayout()
         barra_busca.addWidget(self.campo_busca)
-        barra_busca.addWidget(botao_buscar)
-        barra_busca.addWidget(botao_limpar)
+        barra_busca.addWidget(self.botao_buscar)
+        barra_busca.addWidget(self.botao_limpar)
+        barra_busca.addWidget(self.checkbox_desativados)
 
         barra_acoes = QHBoxLayout()
-        barra_acoes.addWidget(botao_novo)
-        barra_acoes.addWidget(botao_editar)
-        barra_acoes.addWidget(botao_excluir)
+        barra_acoes.addWidget(self.botao_novo)
+        barra_acoes.addWidget(self.botao_editar)
+        barra_acoes.addWidget(self.botao_excluir)
+        barra_acoes.addWidget(self.botao_reativar)
         barra_acoes.addStretch()
 
         self.modelo = ProdutoTableModel()
@@ -275,16 +283,37 @@ class ProdutosView(QWidget):
         layout.addLayout(barra_acoes)
         layout.addWidget(self.tabela)
 
-        self._carregar_todos()
+        self._recarregar()
 
-    def _carregar_todos(self):
+    def _mostrando_desativados(self):
+        return self.checkbox_desativados.isChecked()
+
+    def _recarregar(self):
+        """
+        Recarrega a tabela de acordo com o modo atual (ativos ou
+        desativados), e ajusta quais ações fazem sentido em cada modo:
+        num produto desativado não dá pra editar/excluir de novo (o
+        próprio backend já bloqueia), só reativar.
+        """
         self.campo_busca.clear()
-        self.modelo.set_produtos(listar_todos())
+        modo_desativados = self._mostrando_desativados()
+
+        if modo_desativados:
+            self.modelo.set_produtos(listar_inativos())
+        else:
+            self.modelo.set_produtos(listar_todos())
+
+        self.campo_busca.setEnabled(not modo_desativados)
+        self.botao_buscar.setEnabled(not modo_desativados)
+        self.botao_novo.setEnabled(not modo_desativados)
+        self.botao_editar.setEnabled(not modo_desativados)
+        self.botao_excluir.setEnabled(not modo_desativados)
+        self.botao_reativar.setEnabled(modo_desativados)
 
     def _buscar(self):
         termo = self.campo_busca.text().strip()
         if not termo:
-            self._carregar_todos()
+            self._recarregar()
             return
         self.modelo.set_produtos(buscar_por_nome(termo))
 
@@ -297,7 +326,7 @@ class ProdutosView(QWidget):
     def _novo(self):
         dialogo = ProdutoDialog(parent=self)
         if dialogo.exec():
-            self._carregar_todos()
+            self._recarregar()
 
     def _editar(self):
         produto = self._produto_selecionado()
@@ -306,7 +335,7 @@ class ProdutosView(QWidget):
             return
         dialogo = ProdutoDialog(produto=produto, parent=self)
         if dialogo.exec():
-            self._carregar_todos()
+            self._recarregar()
 
     def _excluir(self):
         produto = self._produto_selecionado()
@@ -319,4 +348,17 @@ class ProdutosView(QWidget):
         )
         if resposta == QMessageBox.StandardButton.Yes:
             excluir_produto(produto.id_produto)
-            self._carregar_todos()
+            self._recarregar()
+
+    def _reativar(self):
+        produto = self._produto_selecionado()
+        if produto is None:
+            QMessageBox.information(self, "Nenhum produto selecionado", "Selecione um produto na tabela primeiro.")
+            return
+
+        resposta = QMessageBox.question(
+            self, "Confirmar reativação", f"Reativar o produto '{produto.nome_produto}'?"
+        )
+        if resposta == QMessageBox.StandardButton.Yes:
+            reativar_produto(produto.id_produto)
+            self._recarregar()
