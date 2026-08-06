@@ -29,7 +29,6 @@ main.py → interface/ (menus) → controllers/ (orquestração) → services/ (
 - **`database/`** — schema (`banco.py`) e importador da planilha legada (`importfromxlsx.py`).
 - **`utils/`** — conexão com o banco (`conectar_banco.py`, já com `row_factory = sqlite3.Row`), helpers de `UPDATE` genérico (`db_campos.py`), validações (`validacoes.py`), leitor de código de barras (`leitor_barras.py`).
 - **`tests_automatizados/`** — suíte `pytest` (ver abaixo).
-- **`tests/`** — scripts manuais antigos, **não são testes automatizados** (chamam um controller pra teste manual no terminal).
 
 ### Decisões de design importantes
 
@@ -73,4 +72,3 @@ pytest -v
 
 - **Interface gráfica** — próximo passo principal. Hoje é 100% terminal.
 - `Categoria` em `models/` é só um scaffold: nenhuma função de `services/` ainda devolve a linha inteira dessa entidade pra um controller consumir.
-- `utils/exportar_pdf.py` — arquivo reservado pra uma futura exportação em PDF, ainda não implementado.

@@ -6,13 +6,11 @@ class Categoria:
     """
     Representa uma linha da tabela `categoria`.
 
-    Scaffold: hoje nenhuma função de `services/` devolve a linha inteira de
-    `categoria` pra um controller -- os usos existentes
-    (`obter_ou_criar_categoria`, `buscar_categoria_por_id`, `editar_categoria`,
-    o relatório por categoria) sempre pegam só `id_categoria` ou só
-    `nome_categoria` isoladamente, nunca os dois juntos como entidade. Esse
-    model fica pronto pra quando existir uma consulta desse tipo (ex: uma
-    tela de "listar categorias" no front).
+    Usada por `services/buscar_produto.py::listar_categorias()` -- os
+    outros usos (`obter_ou_criar_categoria`, `buscar_categoria_por_id`,
+    `editar_categoria`, o relatório por categoria) continuam pegando só
+    `id_categoria` ou só `nome_categoria` isoladamente, sem precisar da
+    entidade inteira.
     """
     id_categoria: int
     nome_categoria: str

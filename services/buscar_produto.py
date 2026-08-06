@@ -5,6 +5,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 from utils.conectar_banco import conectar_banco
 from models.produto import Produto
+from models.categoria import Categoria
 
 
 def buscar_por_codigo_barras(codigo):
@@ -78,6 +79,22 @@ def buscar_categoria_por_id(id_produto):
     conn.close()
 
     return resultado[0] if resultado else None
+
+
+def listar_categorias():
+    """
+    Lista todas as categorias já cadastradas, ordenadas por nome.
+    Pensada pra alimentar uma lista suspensa no front (em vez de o
+    usuário digitar o nome livre e arriscar criar uma categoria
+    duplicada por erro de digitação, ex: "BEBIDA" vs "BEBIDAS").
+    """
+    conn = conectar_banco()
+    cursor = conn.execute("SELECT * FROM categoria ORDER BY nome_categoria")
+
+    categorias = cursor.fetchall()
+    conn.close()
+
+    return Categoria.from_rows(categorias)
 
 def buscar_codigo_barras_por_id(id_produto):
     return _buscar_campo_por_id(id_produto, "codigo_barras")
