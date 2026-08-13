@@ -157,6 +157,48 @@ class ProdutoDialog(QDialog):
         layout.addLayout(form)
         layout.addWidget(botoes)
 
+        self._definir_ordem_de_tabulacao()
+
+    def _definir_ordem_de_tabulacao(self):
+        """
+        Fixa explicitamente a ordem de "próximo campo" (Tab / Enter),
+        pra não depender da ordem implícita do layout.
+        """
+        campos = [
+            self.campo_nome,
+            self.campo_categoria,
+            self.campo_codigo_barras,
+            self.campo_medida,
+            self.campo_unidade,
+            self.campo_capacidade,
+            self.campo_minimo,
+        ]
+        if self.produto is not None:
+            campos.append(self.campo_valor_unitario)
+
+        for campo_atual, proximo_campo in zip(campos, campos[1:]):
+            QWidget.setTabOrder(campo_atual, proximo_campo)
+
+    def keyPressEvent(self, event):
+        """
+        Enter/Return move pro próximo campo em vez de tentar salvar --
+        importante porque o leitor de código de barras "digita" o código
+        e aperta Enter sozinho ao terminar a leitura. Sem isso, o Enter
+        do leitor tentava salvar o formulário incompleto.
+
+        Só deixa o Enter agir normalmente (ativar o botão) quando o foco
+        já está em um dos botões (Salvar/Cancelar) -- ali sim é o
+        comportamento esperado.
+        """
+        tecla_enter = event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter)
+        foco_esta_num_botao = isinstance(self.focusWidget(), QPushButton)
+
+        if tecla_enter and not foco_esta_num_botao:
+            self.focusNextChild()
+            return
+
+        super().keyPressEvent(event)
+
     def _preencher(self, produto):
         self.campo_nome.setText(produto.nome_produto)
 
