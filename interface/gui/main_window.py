@@ -7,6 +7,7 @@ from PySide6.QtWidgets import QMainWindow, QTabWidget
 
 from gui.produtos_view import ProdutosView
 from gui.vendas_view import VendasView
+from gui.compras_view import ComprasView
 from gui.placeholder_view import PlaceholderView
 
 
@@ -19,7 +20,7 @@ class MainWindow(QMainWindow):
         abas = QTabWidget()
         abas.addTab(ProdutosView(), "Produtos")
         abas.addTab(VendasView(), "Vendas")
-        abas.addTab(PlaceholderView("Compras"), "Compras")
+        abas.addTab(ComprasView(), "Compras")
         abas.addTab(PlaceholderView("Estoque"), "Estoque")
         abas.addTab(PlaceholderView("Relatórios"), "Relatórios")
 
